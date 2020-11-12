@@ -79,7 +79,7 @@ object JourneyCacheEndpoints {
               journeyCache.getJourneyByJourneyID(search.journeyID)
             )
             .head //TODO: I this safe?
-      } yield UserHistory(userJourneys)
+      } yield Ok(UserHistory(userJourneys))
     }
 
   def insertJourney(repository: JourneyCache): Endpoint[IO, String] =
