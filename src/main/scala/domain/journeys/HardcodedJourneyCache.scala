@@ -4,7 +4,7 @@ import java.util.UUID
 
 import cats.effect.IO
 import cats.data.{EitherT, NonEmptyList}
-import domain.Postcode
+import domain.{Postcode, JourneyID}
 import org.slf4j.{LoggerFactory, Logger}
 
 class HardcodedJourneyCache(implicit val logger: Logger) extends JourneyCache {
@@ -15,6 +15,13 @@ class HardcodedJourneyCache(implicit val logger: Logger) extends JourneyCache {
     IO.pure(HardcodedJourneyCache.repository.filter { journey =>
       journey.start.equals(start) && journey.end.equals(end)
     }.headOption)
+
+  override def getJourneyByJourneyID(
+      journeyID: JourneyID
+  ): IO[List[Journey]] =
+    IO.pure(HardcodedJourneyCache.repository.filter { journey =>
+      journey.journeyID.equals(journeyID)
+    })
 
   override def insertJourney(journey: Journey): IO[Unit] = {
     logger.warn(
@@ -57,7 +64,7 @@ object HardcodedJourneyCache {
       includesNoChangeRoute = true
     ),
     Journey(
-      UUID.fromString("c7f673a8-8d5d-4941-8575-13aeed66b59f"),
+      UUID.fromString("a55eb972-7c5d-43b4-8a33-6be2fb371dbaa55eb972-7c5d-43b4-8a33-6be2fb371dba"),
       "SE8 5JT",
       "SW1A Y6T",
       NonEmptyList

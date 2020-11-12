@@ -1,7 +1,7 @@
 import java.util.UUID
 
 package object domain{
-  type UserID = String
+  type UserID = UUID
   type Postcode = String
   type JourneyID = UUID
 }
