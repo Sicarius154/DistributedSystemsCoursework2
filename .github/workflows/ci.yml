@@ -43,7 +43,7 @@ jobs:
       run: |
         case ${{ matrix.jobtype }} in
           1)
-            sbt -v "scalafmtCheckAll; +test;"
+            sbt -v "test;"
             ;;
           2)
             sbt -v "scripted actions/*"
