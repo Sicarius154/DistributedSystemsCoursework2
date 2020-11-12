@@ -4,7 +4,6 @@ import java.util.UUID
 
 import cats.effect.IO
 import cats.data.{EitherT, NonEmptyList}
-import domain.journeys.HardcodedJourneyCache
 import domain.{JourneyID, UserID}
 import org.slf4j.{LoggerFactory, Logger}
 

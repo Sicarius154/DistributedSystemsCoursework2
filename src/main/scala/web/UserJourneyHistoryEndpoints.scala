@@ -3,11 +3,7 @@ package web
 import java.util.UUID
 
 import domain.JourneyID
-import io.finch.circe._
-import cats._
-import cats.data._
 import cats.implicits._
-import cats.effect._
 import io.finch._
 import io.finch.catsEffect.get
 import io.finch.{Endpoint, Ok}

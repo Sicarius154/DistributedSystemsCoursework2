@@ -1,16 +1,8 @@
 package web
-import io.circe.Json
-import pdi.jwt.{JwtClaim, JwtAlgorithm, JwtCirce}
-import cats.syntax._
-import cats.syntax.either._
+import pdi.jwt.{JwtAlgorithm, JwtCirce}
 import domain.UserID
-import domain.searches.Search
 import io.circe.{Encoder, Decoder}
-import io.finch.circe._
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import scala.util.Try
-import io.circe._
-import io.circe.parser._
 
 case class TokenResult(id: UserID, userName: String)
 

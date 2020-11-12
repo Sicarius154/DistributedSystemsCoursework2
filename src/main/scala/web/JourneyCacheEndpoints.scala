@@ -1,20 +1,13 @@
 package web
 
-import java.util.UUID
-
 import domain.Postcode
-import io.finch.circe._
 import io.finch._
 import io.finch.catsEffect.{jsonBody, post, get}
 import io.finch.{NoContent, Endpoint, Ok}
 import cats.effect.IO
 import domain.journeys.{JourneyCache, Journey}
 import io.finch.catsEffect._
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.finch.circe._
-import cats.syntax._
-import cats._
-import cats.implicits._
 import web._
 import org.slf4j.{LoggerFactory, Logger}
 
