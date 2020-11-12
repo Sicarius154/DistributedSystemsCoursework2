@@ -2,9 +2,7 @@ package web
 
 import java.util.UUID
 
-import cats.Traverse.ops.toAllTraverseOps
 import domain.{JourneyID, Postcode}
-import io.circe.{Encoder, Decoder}
 import io.finch.circe._
 import io.finch._
 import io.finch.catsEffect.{jsonBody, post, get}
@@ -18,41 +16,11 @@ import io.finch.circe._
 import cats.syntax._
 import cats._
 import cats.implicits._
+import web._
 import org.slf4j.{LoggerFactory, Logger}
-import cats.Applicative._
 
 object JourneyCacheEndpoints {
   private val log: Logger = LoggerFactory.getLogger("JourneyEndpoints")
-
-  private implicit val searchDecoder: Decoder[Search] =
-    deriveDecoder
-  private implicit val searchEncoder: Encoder[Search] =
-    deriveEncoder
-  private implicit val journeyDecoder: Decoder[Journey] =
-    deriveDecoder
-  private implicit val journeyEncoder: Encoder[Journey] =
-    deriveEncoder
-  private implicit val historyDecoder: Decoder[UserHistory] =
-    deriveDecoder
-  private implicit val historyEncoder: Encoder[UserHistory] =
-    deriveEncoder
-
-  private implicit val routeDecoder: Decoder[Route] =
-    deriveDecoder
-  private implicit val routeEncoder: Encoder[Route] =
-    deriveEncoder
-
-  private implicit val lineDecoder: Decoder[Line] =
-    deriveDecoder
-  private implicit val lineEncoder: Encoder[Line] =
-    deriveEncoder
-
-  private implicit val insertJourneyRequestDecoder
-      : Decoder[InsertJourneyRequest] =
-    deriveDecoder
-  private implicit val insertJourneyRequestEncoder
-      : Encoder[InsertJourneyRequest] =
-    deriveEncoder
 
   def getJourney(
       repository: JourneyCache,
