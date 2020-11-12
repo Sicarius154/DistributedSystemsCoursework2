@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets
 
 import config.Config
 import domain.journeys.HardcodedJourneyCache
+import domain.searches.HardcodedSearchRepository
 import io.finch.Input
 import pureconfig.ConfigSource
 import pureconfig.generic.auto._ //required
@@ -11,6 +12,10 @@ import pureconfig.generic.auto._ //required
 object TestSupport {
   def withHardcodedJourneyCache()(f: HardcodedJourneyCache => Unit): Unit = {
     HardcodedJourneyCache().map(cache => f(cache))
+  }
+
+  def withHardcodedSearchRepository()(f: HardcodedSearchRepository => Unit): Unit = {
+    HardcodedSearchRepository().map(repo => f(repo))
   }
 
   def loadConfig: Config =
