@@ -2,7 +2,7 @@ package domain
 import java.util.UUID
 
 import cats.effect.IO
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, EitherT}
 import org.slf4j.{LoggerFactory, Logger}
 
 class HardcodedJourneyCache(implicit val logger: Logger) extends JourneyCache {
@@ -15,13 +15,16 @@ class HardcodedJourneyCache(implicit val logger: Logger) extends JourneyCache {
     }.headOption)
 
   override def insertJourney(journey: Journey): IO[Unit] = {
-    logger.warn("Hardcoded repository does not support insertions, returning Unit anyway...")
+    logger.warn(
+      "Hardcoded repository does not support insertions, returning Unit anyway..."
+    )
     IO.unit
   }
 }
 
 object HardcodedJourneyCache {
-  private implicit val logger: Logger = LoggerFactory.getLogger("HardcodedJourneyCache")
+  private implicit val logger: Logger =
+    LoggerFactory.getLogger("HardcodedJourneyCache")
 
   private val repository = NonEmptyList.of(
     Journey(
@@ -65,5 +68,6 @@ object HardcodedJourneyCache {
     )
   )
 
-  def apply(): HardcodedJourneyCache = new HardcodedJourneyCache()
+  def apply(): EitherT[IO, String, HardcodedJourneyCache] =
+    EitherT.right(IO(new HardcodedJourneyCache()))
 }
