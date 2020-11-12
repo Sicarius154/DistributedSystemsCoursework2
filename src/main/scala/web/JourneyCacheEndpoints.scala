@@ -1,12 +1,13 @@
 package web
 
-import domain.{Journey, Route, Line, Postcode, JourneyCache}
+import domain.Postcode
 import io.circe.{Encoder, Decoder}
 import io.finch.circe._
 import io.finch._
 import io.finch.catsEffect.{jsonBody, post, get}
 import io.finch.{NoContent, Endpoint, Ok}
 import cats.effect.IO
+import domain.journeys.{JourneyCache, Journey, Line, Route}
 import io.finch.catsEffect._
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.finch.circe._

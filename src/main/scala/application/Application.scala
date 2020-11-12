@@ -1,6 +1,6 @@
 package application
 
-import domain.{JourneyCache, HardcodedJourneyCache}
+import domain.journeys
 import cats.Applicative.ops.toAllApplicativeOps
 import cats.effect.{ContextShift, Blocker, Resource, ExitCode, IO}
 import com.twitter.finagle.{ListeningServer, Service, Http}
@@ -10,10 +10,12 @@ import io.finch.{Bootstrap, Application, ToAsync}
 import org.slf4j.{LoggerFactory, Logger}
 import pureconfig.ConfigSource
 import com.twitter.util.Future
+import domain.journeys.{JourneyCache, HardcodedJourneyCache}
 import web.Endpoints
 import io.finch.circe._
 import io.circe.generic.auto._
-import pureconfig.generic.auto._ //required
+import pureconfig.generic.auto._
+
 import scala.concurrent.ExecutionContext
 
 class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO]) {

@@ -1,9 +1,10 @@
 package web
 
 import cats.effect.IO
-import domain.{JourneyCache, Journey}
+import domain.journeys
+import domain.journeys.{Journey, JourneyCache}
 import io.finch.Endpoint
-import shapeless.{:+:, CNil}
+import shapeless.{CNil, :+:}
 
 object Endpoints {
   def journeyCacheEndpoints(

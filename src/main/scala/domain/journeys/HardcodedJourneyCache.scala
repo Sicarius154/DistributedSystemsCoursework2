@@ -1,8 +1,10 @@
-package domain
+package domain.journeys
+
 import java.util.UUID
 
 import cats.effect.IO
-import cats.data.{NonEmptyList, EitherT}
+import cats.data.{EitherT, NonEmptyList}
+import domain.Postcode
 import org.slf4j.{LoggerFactory, Logger}
 
 class HardcodedJourneyCache(implicit val logger: Logger) extends JourneyCache {

@@ -5,7 +5,7 @@ import java.util.UUID
 import cats.data.NonEmptyList
 import com.twitter.finagle.http.Status
 import config.Config
-import domain.{HardcodedJourneyCache, Route, Line, Journey}
+import domain.journeys.{Journey, Line, HardcodedJourneyCache, Route}
 import io.finch.Input
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpec
@@ -13,7 +13,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.concurrent.Eventually
 import test.TestSupport
 import io.circe.syntax._
-
+import domain.journeys._
 import scala.io.Source
 
 class JourneyCacheEndpointsSpec

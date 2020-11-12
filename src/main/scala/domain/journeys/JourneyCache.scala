@@ -1,8 +1,7 @@
-package domain
+package domain.journeys
 
-import cats.data.NonEmptyList
 import cats.effect.IO
-
+import domain.Postcode
 
 trait JourneyCache {
   def getJourneyByPostcodes(start: Postcode, end: Postcode): IO[Option[Journey]]

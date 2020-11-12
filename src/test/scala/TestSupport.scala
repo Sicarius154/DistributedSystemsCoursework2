@@ -3,7 +3,7 @@ package test
 import java.nio.charset.StandardCharsets
 
 import config.Config
-import domain.HardcodedJourneyCache
+import domain.journeys.HardcodedJourneyCache
 import io.finch.Input
 import pureconfig.ConfigSource
 import pureconfig.generic.auto._ //required
