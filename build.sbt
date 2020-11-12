@@ -30,7 +30,8 @@ lazy val root = (project in file("."))
       Dependencies.Doobie.postgres,
       Dependencies.Doobie.hikari,
       Dependencies.Doobie.h2,
-      Dependencies.Doobie.specs2
+      Dependencies.Doobie.specs2,
+      Dependencies.JWT.jwtCirce
     )
   )
 
