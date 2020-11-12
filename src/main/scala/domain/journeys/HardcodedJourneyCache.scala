@@ -18,10 +18,10 @@ class HardcodedJourneyCache(implicit val logger: Logger) extends JourneyCache {
 
   override def getJourneyByJourneyID(
       journeyID: JourneyID
-  ): IO[List[Journey]] =
+  ): IO[Journey] =
     IO.pure(HardcodedJourneyCache.repository.filter { journey =>
       journey.journeyID.equals(journeyID)
-    })
+    }.head)
 
   override def insertJourney(journey: Journey): IO[Unit] = {
     logger.warn(

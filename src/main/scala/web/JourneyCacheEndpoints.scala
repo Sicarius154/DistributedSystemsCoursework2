@@ -2,7 +2,8 @@ package web
 
 import java.util.UUID
 
-import domain.Postcode
+import cats.Traverse.ops.toAllTraverseOps
+import domain.{JourneyID, Postcode}
 import io.circe.{Encoder, Decoder}
 import io.finch.circe._
 import io.finch._
@@ -14,7 +15,11 @@ import domain.searches.{SearchRepository, Search}
 import io.finch.catsEffect._
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.finch.circe._
+import cats.syntax._
+import cats._
+import cats.implicits._
 import org.slf4j.{LoggerFactory, Logger}
+import cats.Applicative._
 
 object JourneyCacheEndpoints {
   private val log: Logger = LoggerFactory.getLogger("JourneyEndpoints")
@@ -67,19 +72,22 @@ object JourneyCacheEndpoints {
       journeyCache: JourneyCache
   ): Endpoint[IO, UserHistory] =
     get("history" :: header[String]("jwt")) { token: String =>
-      val userID: String = ""
+      val userID: String = "11ff5ee5-65c7-4ccd-826d-ad9e57238adb"
       log.info(s"GET Request received for user journey history $userID")
 
+      val userSearches: IO[List[JourneyID]] =
+        searchRepository
+          .getUserSearches(UUID.fromString(userID))
+          .map(searches => searches.map(_.journeyID))
+
       for {
-        userSearches <-
-          searchRepository.getUserSearches(UUID.fromString(userID))
-        userJourneys <-
-          userSearches
-            .map((search: Search) =>
-              journeyCache.getJourneyByJourneyID(search.journeyID)
-            )
-            .head //TODO: I this safe?
-      } yield Ok(UserHistory(userJourneys))
+        userSearches <- userSearches.map { items: List[JourneyID] =>
+          items.map { item =>
+            journeyCache.getJourneyByJourneyID(item).unsafeRunSync() //TODO: This is unsafe! need to find a way around this!
+          }
+        }
+
+      } yield Ok(UserHistory(userSearches))
     }
 
   def insertJourney(repository: JourneyCache): Endpoint[IO, String] =

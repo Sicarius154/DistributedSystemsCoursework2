@@ -42,8 +42,8 @@ object HardcodedSearchRepository {
         UUID.fromString("a55eb972-7c5d-43b4-8a33-6be2fb371dba")
       ),
       Search(
-        UUID.fromString("81ecd117-085e-4202-80e1-9bd738ffab8e"),
-        UUID.fromString("a55eb972-7c5d-43b4-8a33-6be2fb371dba")
+        UUID.fromString("11ff5ee5-65c7-4ccd-826d-ad9e57238adb"),
+        UUID.fromString("3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1")
       )
     )
 
