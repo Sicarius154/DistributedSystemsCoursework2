@@ -11,6 +11,11 @@ object Dependencies {
     val pureConfig = "com.github.pureconfig" %% "pureconfig" % pureConfigVersion
   }
 
+  object JWT {
+    val jwtScalaVersion = "4.2.0"
+    val jwtCirce = "com.pauldijou" %% "jwt-circe" % jwtScalaVersion
+  }
+
   object Testing {
     val scalaTestVersion = "3.1.2"
     val scalaTest = "org.scalatest" %% "scalatest" % scalaTestVersion % Test
