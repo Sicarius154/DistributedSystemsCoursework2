@@ -35,7 +35,9 @@ class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO]) {
               serve(
                 journeyCache,
                 searchRepository,
-                conf.journeyCacheServiceConfig.port
+                conf.journeyCacheServiceConfig.port,
+                conf.jwtConfig.secret,
+                conf.jwtConfig.algorithm
               )
             )(s => IO.suspend(implicitly[ToAsync[Future, IO]].apply(s.close())))
           server.use(_ => IO.never).as(ExitCode.Success)
@@ -55,20 +57,32 @@ class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO]) {
   private def serve(
       journeyCache: JourneyCache,
       searchRepository: HardcodedSearchRepository,
-      portNumber: Int
+      portNumber: Int,
+      jwtSecret: String,
+      jwtAlgorithm: String
   ): IO[ListeningServer] =
     IO(
       Http.server
-        .serve(s":$portNumber", service(journeyCache, searchRepository))
+        .serve(
+          s":$portNumber",
+          service(journeyCache, searchRepository, jwtSecret, jwtAlgorithm)
+        )
     )
 
   private def service(
       journeyCache: JourneyCache,
-      searchRepository: HardcodedSearchRepository
+      searchRepository: HardcodedSearchRepository,
+      jwtSecret: String,
+      jwtAlgorithm: String
   ): Service[Request, Response] =
     Bootstrap
       .serve[Application.Json](
-        Endpoints.journeyCacheEndpoints(journeyCache, searchRepository)
+        Endpoints.journeyCacheEndpoints(
+          journeyCache,
+          searchRepository,
+          jwtSecret,
+          jwtAlgorithm
+        )
       )
       .toService
 
