@@ -4,7 +4,6 @@ import java.util.UUID
 
 import cats.data.NonEmptyList
 import cats.effect.IO
-import jdk.jshell.spi.ExecutionControl.NotImplementedException
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.concurrent.Eventually
