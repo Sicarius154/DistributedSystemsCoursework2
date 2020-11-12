@@ -64,7 +64,7 @@ object HardcodedJourneyCache {
       includesNoChangeRoute = true
     ),
     Journey(
-      UUID.fromString("a55eb972-7c5d-43b4-8a33-6be2fb371dbaa55eb972-7c5d-43b4-8a33-6be2fb371dba"),
+      UUID.fromString("c7f673a8-8d5d-4941-8575-13aeed66b59f"),
       "SE8 5JT",
       "SW1A Y6T",
       NonEmptyList
