@@ -77,7 +77,7 @@ class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO]) {
   ): Service[Request, Response] =
     Bootstrap
       .serve[Application.Json](
-        Endpoints.journeyCacheEndpoints(
+        Endpoints.all(
           journeyCache,
           searchRepository,
           jwtSecret,

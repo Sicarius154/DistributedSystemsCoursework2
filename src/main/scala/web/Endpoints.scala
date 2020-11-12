@@ -7,9 +7,25 @@ import io.finch.Endpoint
 import shapeless.{CNil, :+:}
 
 object Endpoints {
-  def journeyCacheEndpoints(
+  def all(
       journeyCache: JourneyCache,
       searchRepository: SearchRepository,
+      jwtSecret: String,
+      jwtAlgorithm: String
+  ): Endpoint[IO, Journey :+: String :+: UserHistory :+: CNil] =
+    journeyCacheEndpoints(
+      journeyCache,
+      jwtSecret,
+      jwtAlgorithm
+    ) :+: userJourneyHistoryEndpoints(
+      journeyCache,
+      searchRepository,
+      jwtSecret,
+      jwtAlgorithm
+    )
+
+  def journeyCacheEndpoints(
+      journeyCache: JourneyCache,
       jwtSecret: String,
       jwtAlgorithm: String
   ): Endpoint[IO, Journey :+: String :+: CNil] =
