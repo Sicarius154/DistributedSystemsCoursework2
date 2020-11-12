@@ -9,12 +9,20 @@ import shapeless.{CNil, :+:}
 object Endpoints {
   def journeyCacheEndpoints(
       journeyCache: JourneyCache,
-      searchRepository: SearchRepository
+      searchRepository: SearchRepository,
+      jwtSecret: String,
+      jwtAlgorithm: String
   ): Endpoint[IO, Journey :+: UserHistory :+: String :+: CNil] =
     JourneyCacheEndpoints
-      .getJourney(journeyCache) :+: JourneyCacheEndpoints.getJourneyHistory(
+      .getJourney(
+        journeyCache,
+        jwtSecret,
+        jwtAlgorithm
+      ) :+: JourneyCacheEndpoints.getJourneyHistory(
       searchRepository,
-      journeyCache
+      journeyCache,
+      jwtSecret,
+      jwtAlgorithm
     ) :+: JourneyCacheEndpoints
-      .insertJourney(journeyCache)
+      .insertJourney(journeyCache, jwtSecret, jwtAlgorithm)
 }
