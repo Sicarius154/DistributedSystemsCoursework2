@@ -12,17 +12,25 @@ object Endpoints {
       searchRepository: SearchRepository,
       jwtSecret: String,
       jwtAlgorithm: String
-  ): Endpoint[IO, Journey :+: UserHistory :+: String :+: CNil] =
+  ): Endpoint[IO, Journey :+: String :+: CNil] =
     JourneyCacheEndpoints
       .getJourney(
         journeyCache,
         jwtSecret,
         jwtAlgorithm
-      ) :+: JourneyCacheEndpoints.getJourneyHistory(
+      ) :+: JourneyCacheEndpoints
+      .insertJourney(journeyCache, jwtSecret, jwtAlgorithm)
+
+  def userJourneyHistoryEndpoints(
+      journeyCache: JourneyCache,
+      searchRepository: SearchRepository,
+      jwtSecret: String,
+      jwtAlgorithm: String
+  ): Endpoint[IO, UserHistory] =
+    UserJourneyHistoryEndpoints.getJourneyHistory(
       searchRepository,
       journeyCache,
       jwtSecret,
       jwtAlgorithm
-    ) :+: JourneyCacheEndpoints
-      .insertJourney(journeyCache, jwtSecret, jwtAlgorithm)
+    )
 }

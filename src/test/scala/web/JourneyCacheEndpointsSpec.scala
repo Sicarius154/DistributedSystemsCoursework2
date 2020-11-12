@@ -108,36 +108,6 @@ class JourneyCacheEndpointsSpec
       }
     }
   }
-
-  "/history" should {
-    "Return the correct user history" when {
-      "a valid JWT token is supplied and the user ID is correct" in {
-        TestSupport.withHardcodedJourneyCache() {
-          cache: HardcodedJourneyCache =>
-            val req = Input
-              .get(JourneyCacheEndpointsSpec.getHistoryEndpoint)
-              .withHeaders(
-                "jwt" -> JourneyCacheEndpointsSpec.validJwtToken
-              )
-
-            eventually {
-              JourneyCacheEndpoints
-                .getJourney(
-                  cache,
-                  JourneyCacheEndpointsSpec.jwtSecret,
-                  JourneyCacheEndpointsSpec.jwtAlgorithm
-                )(req)
-                .awaitOutputUnsafe()
-                .map(
-                  _.value
-                ) mustEqual JourneyCacheEndpointsSpec.validUserHistory //TODO: Maybe just use sameElementsAs
-            }
-        }
-
-      }
-    }
-  }
-
 }
 
 object JourneyCacheEndpointsSpec {
@@ -164,38 +134,5 @@ object JourneyCacheEndpointsSpec {
     includesNoChangeRoute = false
   )
 
-  val validUserHistory: List[Journey] = List[Journey](
-    Journey(
-      UUID.fromString("a55eb972-7c5d-43b4-8a33-6be2fb371dba"),
-      "E14 9UY",
-      "E1, 5JT",
-      NonEmptyList
-        .of(
-          Route(
-            NonEmptyList.of(Line("DLR"), Line("District"), Line("Northern")),
-            36
-          ),
-          Route(NonEmptyList.of(Line("DLR")), 20)
-        ),
-      27,
-      includesNoChangeRoute = true
-    ),
-    Journey(
-      UUID.fromString("3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1"),
-      "ME7 2EJ",
-      "SW1A VC1",
-      NonEmptyList
-        .of(
-          Route(NonEmptyList.of(Line("Victoria"), Line("Jubilee")), 24),
-          Route(NonEmptyList.of(Line("Victoria"), Line("Central")), 26)
-        ),
-      25,
-      includesNoChangeRoute = false
-    )
-  )
-
   val getJourneyEndpoint: String = "/journey"
-
-  val getHistoryEndpoint: String = "/history"
-
 }
