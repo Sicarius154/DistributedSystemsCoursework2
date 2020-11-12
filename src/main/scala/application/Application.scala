@@ -11,6 +11,7 @@ import org.slf4j.{LoggerFactory, Logger}
 import pureconfig.ConfigSource
 import com.twitter.util.Future
 import domain.journeys.{JourneyCache, HardcodedJourneyCache}
+import domain.searches.HardcodedSearchRepository
 import web.Endpoints
 import io.finch.circe._
 import io.circe.generic.auto._
@@ -27,16 +28,22 @@ class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO]) {
     val conf = loadConfig
 
     for {
-      serverRes <- HardcodedJourneyCache().map { journeyCache =>
-        val server =
-          Resource.make(
-            serve(journeyCache, conf.journeyCacheServiceConfig.port)
-          )(s => IO.suspend(implicitly[ToAsync[Future, IO]].apply(s.close())))
-        server.use(_ => IO.never).as(ExitCode.Success)
+      serverRes <- HardcodedJourneyCache().flatMap { journeyCache =>
+        HardcodedSearchRepository().map { searchRepository =>
+          val server =
+            Resource.make(
+              serve(
+                journeyCache,
+                searchRepository,
+                conf.journeyCacheServiceConfig.port
+              )
+            )(s => IO.suspend(implicitly[ToAsync[Future, IO]].apply(s.close())))
+          server.use(_ => IO.never).as(ExitCode.Success)
+        }
       }.value
 
       res <- serverRes match {
-        case Right(code)       => code
+        case Right(code) => code
         case Left(err: String) => {
           logger.error(s"Exiting with error: $err")
           IO.pure(ExitCode.Error)
@@ -46,14 +53,23 @@ class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO]) {
   }
 
   private def serve(
-      cache: JourneyCache,
+      journeyCache: JourneyCache,
+      searchRepository: HardcodedSearchRepository,
       portNumber: Int
   ): IO[ListeningServer] =
-    IO(Http.server.serve(s":$portNumber", service(cache)))
+    IO(
+      Http.server
+        .serve(s":$portNumber", service(journeyCache, searchRepository))
+    )
 
-  private def service(cache: JourneyCache): Service[Request, Response] =
+  private def service(
+      journeyCache: JourneyCache,
+      searchRepository: HardcodedSearchRepository
+  ): Service[Request, Response] =
     Bootstrap
-      .serve[Application.Json](Endpoints.journeyCacheEndpoints(cache))
+      .serve[Application.Json](
+        Endpoints.journeyCacheEndpoints(journeyCache, searchRepository)
+      )
       .toService
 
   private def loadConfig: Config =
