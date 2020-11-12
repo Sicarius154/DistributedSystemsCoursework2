@@ -1,11 +1,10 @@
-package domain
+package domain.journeys
 
 import java.util.UUID
 
 import test.TestSupport.withHardcodedJourneyCache
 import cats.data.NonEmptyList
 import cats.effect.IO
-import domain.journeys.{Journey, Line, HardcodedJourneyCache, Route}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.concurrent.Eventually
