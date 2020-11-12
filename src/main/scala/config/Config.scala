@@ -1,3 +1,5 @@
 package config
 
-case class Config()
+case class Config(journeyCacheServiceConfig: JourneyCacheServiceConfig)
+
+case class JourneyCacheServiceConfig(port: Int)
