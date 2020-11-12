@@ -1,15 +1,20 @@
 package web
 
 import cats.effect.IO
-import domain.journeys
-import domain.journeys.{Journey, JourneyCache}
+import domain.journeys.{JourneyCache, Journey}
+import domain.searches.SearchRepository
 import io.finch.Endpoint
 import shapeless.{CNil, :+:}
 
 object Endpoints {
   def journeyCacheEndpoints(
-      cache: JourneyCache
-  ): Endpoint[IO, Journey :+: String :+: CNil] =
-    JourneyCacheEndpoints.getJourney(cache) :+: JourneyCacheEndpoints
-      .insertJourney(cache)
+      journeyCache: JourneyCache,
+      searchRepository: SearchRepository
+  ): Endpoint[IO, Journey :+: UserHistory :+: String :+: CNil] =
+    JourneyCacheEndpoints
+      .getJourney(journeyCache) :+: JourneyCacheEndpoints.getJourneyHistory(
+      searchRepository,
+      journeyCache
+    ) :+: JourneyCacheEndpoints
+      .insertJourney(journeyCache)
 }
