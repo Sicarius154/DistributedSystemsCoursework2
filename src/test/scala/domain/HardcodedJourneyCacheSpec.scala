@@ -2,6 +2,7 @@ package domain
 
 import java.util.UUID
 
+import test.TestSupport.withHardcodedJourneyCache
 import cats.data.NonEmptyList
 import cats.effect.IO
 import org.scalatest.wordspec.AnyWordSpec
@@ -14,32 +15,38 @@ class HardcodedJourneyCacheSpec
     with Eventually {
 
   "HardcodedJourneyCache" should {
-    "return a Journey when one exists in the repository" in {
-      val cache = HardcodedJourneyCache()
-      val validStartPostCode = "E14 9UY"
-      val validEndPostCode = "E1, 5JT"
+    "return a Journey when one exists in the repository" in
+      withHardcodedJourneyCache() { cache: HardcodedJourneyCache =>
+        val validStartPostCode = "E14 9UY"
+        val validEndPostCode = "E1, 5JT"
+        val res: IO[Option[Journey]] =
+          cache.getJourneyByPostcodes(validStartPostCode, validEndPostCode)
+
+        res.unsafeRunSync() mustEqual Some(
+          HardcodedJourneyCacheSpec.validStartEndPostcodeJourneyResult
+        )
+      }
+
+  }
+  "return None when a Journey does not exist in the repository" in
+    withHardcodedJourneyCache() { cache: HardcodedJourneyCache =>
+      val validStartPostCode = "S14 9JY"
+      val validEndPostCode = "E1, 5YT"
       val res: IO[Option[Journey]] =
         cache.getJourneyByPostcodes(validStartPostCode, validEndPostCode)
 
-      res.unsafeRunSync() mustEqual Some(HardcodedJourneyCacheSpec.validStartEndPostcodeJourneyResult)
+      res.unsafeRunSync() mustEqual None
     }
-  }
-  "return None when a Journey does not exist in the repository" in {
-    val cache = HardcodedJourneyCache()
-    val validStartPostCode = "S14 9JY"
-    val validEndPostCode = "E1, 5YT"
-    val res: IO[Option[Journey]] =
-      cache.getJourneyByPostcodes(validStartPostCode, validEndPostCode)
 
-    res.unsafeRunSync() mustEqual None
+  "return an error when an insertion is attempted" in
+    withHardcodedJourneyCache() { cache: HardcodedJourneyCache =>
+      val res = cache.insertJourney(
+        HardcodedJourneyCacheSpec.validStartEndPostcodeJourneyInsertion
+      )
 
-  }
-  "return an error when an insertion is attempted" in {
-    val cache = HardcodedJourneyCache()
-    val res = cache.insertJourney(HardcodedJourneyCacheSpec.validStartEndPostcodeJourneyInsertion)
+      res.unsafeRunSync() mustEqual ()
+    }
 
-    res.unsafeRunSync() mustEqual ()
-  }
 }
 
 object HardcodedJourneyCacheSpec {
