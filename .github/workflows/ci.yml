@@ -12,14 +12,8 @@ jobs:
             java: 11
             jobtype: 1
           - os: ubuntu-latest
-            java: 11
-            jobtype: 2
-          - os: windows-latest
-            java: 11
-            jobtype: 2
-          - os: ubuntu-latest
-            java: 11
-            jobtype: 3
+            java: 8
+            jobtype: 1
     runs-on: ${{ matrix.os }}
     env:
       # define Java options for both official sbt and sbt-extras
@@ -44,12 +38,6 @@ jobs:
         case ${{ matrix.jobtype }} in
           1)
             sbt -v "test;"
-            ;;
-          2)
-            sbt -v "scripted actions/*"
-            ;;
-          3)
-            sbt -v "dependency-management/*"
             ;;
           *)
             echo unknown jobtype
