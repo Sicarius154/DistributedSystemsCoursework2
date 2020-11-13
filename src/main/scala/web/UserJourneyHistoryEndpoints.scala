@@ -38,13 +38,9 @@ object UserJourneyHistoryEndpoints {
               .map(searches => searches.map(_.journeyID))
 
           for {
-            userSearches <- userSearches.map { items: List[JourneyID] =>
-              items.map { item =>
-                journeyCache
-                  .getJourneyByJourneyID(item)
-              }
-            }
-          history <- userSearches.sequence
+            userSearches <-
+              userSearches.map(_.map(journeyCache.getJourneyByJourneyID))
+            history <- userSearches.sequence
           } yield Ok(UserHistory(history))
         }
         case Left(err) => {
