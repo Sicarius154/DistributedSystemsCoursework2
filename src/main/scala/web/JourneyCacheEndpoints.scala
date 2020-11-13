@@ -19,11 +19,10 @@ import org.slf4j.{LoggerFactory, Logger}
 
 import scala.concurrent.ExecutionContext
 
-object JourneyCacheEndpoints {
+class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: SearchRepository) {
   private val log: Logger = LoggerFactory.getLogger("JourneyEndpoints")
 
   def getJourney(
-      repository: JourneyCache,
       jwtSecret: String,
       jwtAlgorithm: String
   ): Endpoint[IO, Journey] =
@@ -36,7 +35,7 @@ object JourneyCacheEndpoints {
       Support.decodeJwtToken(token, jwtSecret, jwtAlgorithm) match {
         case Right(tokenResult) => {
           for {
-            journey <- repository.getJourneyByPostcodes(start, end).value
+            journey <- journeyCache.getJourneyByPostcodes(start, end).value
             res = journey match {
               case Some(journey) => Ok(journey)
               case None          => NoContent
@@ -51,8 +50,6 @@ object JourneyCacheEndpoints {
     }
 
   def insertJourney(
-      cache: JourneyCache,
-      searchRepository: SearchRepository,
       jwtSecret: String,
       jwtAlgorithm: String
   )(implicit parallel: Parallel[IO]): Endpoint[IO, String] =
@@ -63,8 +60,6 @@ object JourneyCacheEndpoints {
             log.info("Validating new Journey")
             val validatedJourney = createJourneyFromInput(insertJourneyRequest)
             writeNewJourney(
-              cache,
-              searchRepository,
               tokenResult.id,
               validatedJourney
             )
@@ -78,8 +73,6 @@ object JourneyCacheEndpoints {
     }
 
   private def writeNewJourney(
-      cache: JourneyCache,
-      searchRepository: SearchRepository,
       userID: UserID,
       validatedJourney: Option[Journey]
   )(implicit parallel: Parallel[IO]): IO[Output[Postcode]] = {
@@ -88,7 +81,7 @@ object JourneyCacheEndpoints {
         log.info("Writing new Journey")
         for {
           _ <- List[IO[Unit]](
-            cache.insertJourney(journey),
+            journeyCache.insertJourney(journey),
             searchRepository.addUserSearch(
               userID,
               journey.journeyID

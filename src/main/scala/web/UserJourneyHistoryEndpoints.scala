@@ -12,13 +12,11 @@ import io.finch.catsEffect._
 import web._
 import org.slf4j.{LoggerFactory, Logger}
 
-object UserJourneyHistoryEndpoints {
+class UserJourneyHistoryEndpoints(journeyCache: JourneyCache, searchRepository: SearchRepository) {
   private val log: Logger = LoggerFactory.getLogger("HistoryEndpoints")
 
   //TODO: Tidy this function up
   def getJourneyHistory(
-      searchRepository: SearchRepository,
-      journeyCache: JourneyCache,
       jwtSecret: String,
       jwtAlgorithm: String
   ): Endpoint[IO, UserHistory] =
@@ -31,10 +29,10 @@ object UserJourneyHistoryEndpoints {
           log.info(s"Decoded JWT token and obtained user ID $userID")
 
           val userSearches: IO[List[JourneyID]] =
-            getUserSearchHistory(tokenResult.id, searchRepository)
+            getUserSearchHistory(tokenResult.id)
 
           for {
-            history <- userSearchHistoryToJourneys(userSearches, journeyCache)
+            history <- userSearchHistoryToJourneys(userSearches)
           } yield Ok(history)
         }
         case Left(err) => {
@@ -47,7 +45,6 @@ object UserJourneyHistoryEndpoints {
   //TODO: The following works and is correct, but I'm sure this can be cleaner
   private def userSearchHistoryToJourneys(
       userSearches: IO[List[JourneyID]],
-      journeyCache: JourneyCache
   ): IO[UserHistory] =
     for {
       userSearches <- userSearches.map(
@@ -59,7 +56,6 @@ object UserJourneyHistoryEndpoints {
 
   private def getUserSearchHistory(
       userID: UserID,
-      searchRepository: SearchRepository
   ): IO[List[JourneyID]] =
     searchRepository
       .getUserSearches(userID)

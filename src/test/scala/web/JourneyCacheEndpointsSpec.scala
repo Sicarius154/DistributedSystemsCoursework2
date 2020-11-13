@@ -34,25 +34,26 @@ class JourneyCacheEndpointsSpec
       "A valid start and end postcode are submitted" in {
         TestSupport.withHardcodedJourneyCache() {
           cache: HardcodedJourneyCache =>
-            val req = Input
-              .get(
-                JourneyCacheEndpointsSpec.getJourneyEndpoint,
-                "start" -> "ME7 2EJ",
-                "end" -> "SW1A VC1"
-              )
-              .withHeaders(
-                "jwt" -> JourneyCacheEndpointsSpec.validJwtToken
-              )
+            TestSupport.withHardcodedSearchRepository() { searchRepo: HardcodedSearchRepository =>
+              val req = Input
+                .get(
+                  JourneyCacheEndpointsSpec.getJourneyEndpoint,
+                  "start" -> "ME7 2EJ",
+                  "end" -> "SW1A VC1"
+                )
+                .withHeaders(
+                  "jwt" -> JourneyCacheEndpointsSpec.validJwtToken
+                )
 
-            eventually {
-              JourneyCacheEndpoints
-                .getJourney(
-                  cache,
-                  JourneyCacheEndpointsSpec.jwtSecret,
-                  JourneyCacheEndpointsSpec.jwtAlgorithm
-                )(req)
-                .awaitOutputUnsafe()
-                .map(_.status) mustBe Some(Status.Ok)
+              eventually {
+                new JourneyCacheEndpoints(cache, searchRepo)
+                  .getJourney(
+                    JourneyCacheEndpointsSpec.jwtSecret,
+                    JourneyCacheEndpointsSpec.jwtAlgorithm
+                  )(req)
+                  .awaitOutputUnsafe()
+                  .map(_.status) mustBe Some(Status.Ok)
+              }
             }
         }
       }
@@ -62,25 +63,26 @@ class JourneyCacheEndpointsSpec
       "an invalid JWT token is supplied" in {
         TestSupport.withHardcodedJourneyCache() {
           cache: HardcodedJourneyCache =>
-            val req = Input
-              .get(
-                JourneyCacheEndpointsSpec.getJourneyEndpoint,
-                "start" -> "ME7 2EJ",
-                "end" -> "SW1A VC1"
-              )
-              .withHeaders(
-                "jwt" -> JourneyCacheEndpointsSpec.invalidJwtToken
-              )
+            TestSupport.withHardcodedSearchRepository() { searchRepo: HardcodedSearchRepository =>
+              val req = Input
+                .get(
+                  JourneyCacheEndpointsSpec.getJourneyEndpoint,
+                  "start" -> "ME7 2EJ",
+                  "end" -> "SW1A VC1"
+                )
+                .withHeaders(
+                  "jwt" -> JourneyCacheEndpointsSpec.invalidJwtToken
+                )
 
-            eventually {
-              JourneyCacheEndpoints
-                .getJourney(
-                  cache,
-                  JourneyCacheEndpointsSpec.jwtSecret,
-                  JourneyCacheEndpointsSpec.jwtAlgorithm
-                )(req)
-                .awaitOutputUnsafe()
-                .map(_.status) mustBe Some(Status.NotAcceptable)
+              eventually {
+                new JourneyCacheEndpoints(cache, searchRepo)
+                  .getJourney(
+                    JourneyCacheEndpointsSpec.jwtSecret,
+                    JourneyCacheEndpointsSpec.jwtAlgorithm
+                  )(req)
+                  .awaitOutputUnsafe()
+                  .map(_.status) mustBe Some(Status.NotAcceptable)
+              }
             }
         }
       }
@@ -90,27 +92,29 @@ class JourneyCacheEndpointsSpec
       "when provided with valid postcodes" in {
         TestSupport.withHardcodedJourneyCache() {
           cache: HardcodedJourneyCache =>
-            val req = Input
-              .get(
-                JourneyCacheEndpointsSpec.getJourneyEndpoint,
-                "start" -> "ME7 2EJ",
-                "end" -> "SW1A VC1"
-              )
-              .withHeaders(
-                "jwt" -> JourneyCacheEndpointsSpec.validJwtToken
-              )
+            TestSupport.withHardcodedSearchRepository() { searchRepo: HardcodedSearchRepository =>
 
-            eventually {
-              JourneyCacheEndpoints
-                .getJourney(
-                  cache,
-                  JourneyCacheEndpointsSpec.jwtSecret,
-                  JourneyCacheEndpointsSpec.jwtAlgorithm
-                )(req)
-                .awaitOutputUnsafe()
-                .map(
-                  _.value
-                ) mustEqual JourneyCacheEndpointsSpec.validPostcodesResult
+              val req = Input
+                .get(
+                  JourneyCacheEndpointsSpec.getJourneyEndpoint,
+                  "start" -> "ME7 2EJ",
+                  "end" -> "SW1A VC1"
+                )
+                .withHeaders(
+                  "jwt" -> JourneyCacheEndpointsSpec.validJwtToken
+                )
+
+              eventually {
+                new JourneyCacheEndpoints(cache, searchRepo)
+                  .getJourney(
+                    JourneyCacheEndpointsSpec.jwtSecret,
+                    JourneyCacheEndpointsSpec.jwtAlgorithm
+                  )(req)
+                  .awaitOutputUnsafe()
+                  .map(
+                    _.value
+                  ) mustEqual JourneyCacheEndpointsSpec.validPostcodesResult
+              }
             }
         }
       }
@@ -133,10 +137,8 @@ class JourneyCacheEndpointsSpec
             TestSupport.setReqJsonBodyAndSize(req, JourneyCacheEndpointsSpec.validJourneyPostDataJson)
 
             eventually {
-              JourneyCacheEndpoints
+              new JourneyCacheEndpoints(cache, repo)
                 .insertJourney(
-                  cache,
-                  repo,
                   JourneyCacheEndpointsSpec.jwtSecret,
                   JourneyCacheEndpointsSpec.jwtAlgorithm
                 )(parallel)(req)
@@ -162,10 +164,8 @@ class JourneyCacheEndpointsSpec
             TestSupport.setReqJsonBodyAndSize(req, JourneyCacheEndpointsSpec.invalidJourneyPostDataJson)
 
             eventually {
-              JourneyCacheEndpoints
+              new JourneyCacheEndpoints(cache, repo)
                 .insertJourney(
-                  cache,
-                  repo,
                   JourneyCacheEndpointsSpec.jwtSecret,
                   JourneyCacheEndpointsSpec.jwtAlgorithm
                 )(parallel)(req)
@@ -191,10 +191,8 @@ class JourneyCacheEndpointsSpec
           TestSupport.setReqJsonBodyAndSize(req, JourneyCacheEndpointsSpec.validJourneyPostDataJson)
 
           eventually {
-            JourneyCacheEndpoints
+            new JourneyCacheEndpoints(cache, repo)
               .insertJourney(
-                cache,
-                repo,
                 JourneyCacheEndpointsSpec.jwtSecret,
                 JourneyCacheEndpointsSpec.jwtAlgorithm
               )(parallel)(req)

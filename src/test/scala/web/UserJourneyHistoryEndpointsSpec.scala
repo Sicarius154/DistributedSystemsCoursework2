@@ -14,6 +14,8 @@ import org.scalatest.concurrent.Eventually
 import test.TestSupport
 import io.circe.syntax._
 import domain.journeys._
+import domain.searches.HardcodedSearchRepository
+
 import scala.io.Source
 
 class UserJourneyHistoryEndpointsSpec
@@ -26,26 +28,27 @@ class UserJourneyHistoryEndpointsSpec
       "a valid JWT token is supplied and the user ID is correct" in {
         TestSupport.withHardcodedJourneyCache() {
           cache: HardcodedJourneyCache =>
-            val req = Input
-              .get(UserJourneyHistoryEndpointsSpec.getHistoryEndpoint)
-              .withHeaders(
-                "jwt" -> UserJourneyHistoryEndpointsSpec.validJwtToken
-              )
+            TestSupport.withHardcodedSearchRepository() { searchRepo: HardcodedSearchRepository =>
 
-            eventually {
-              JourneyCacheEndpoints
-                .getJourney(
-                  cache,
-                  JourneyCacheEndpointsSpec.jwtSecret,
-                  JourneyCacheEndpointsSpec.jwtAlgorithm
-                )(req)
-                .awaitOutputUnsafe()
-                .map(
-                  _.value
-                ) mustEqual UserJourneyHistoryEndpointsSpec.validUserHistory //TODO: Maybe just use sameElementsAs
+              val req = Input
+                .get(UserJourneyHistoryEndpointsSpec.getHistoryEndpoint)
+                .withHeaders(
+                  "jwt" -> UserJourneyHistoryEndpointsSpec.validJwtToken
+                )
+
+              eventually {
+                new JourneyCacheEndpoints(cache, searchRepo)
+                  .getJourney(
+                    JourneyCacheEndpointsSpec.jwtSecret,
+                    JourneyCacheEndpointsSpec.jwtAlgorithm
+                  )(req)
+                  .awaitOutputUnsafe()
+                  .map(
+                    _.value
+                  ) mustEqual UserJourneyHistoryEndpointsSpec.validUserHistory //TODO: Maybe just use sameElementsAs
+              }
             }
         }
-
       }
     }
   }

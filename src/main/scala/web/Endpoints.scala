@@ -35,25 +35,27 @@ object Endpoints {
       jwtAlgorithm: String
   )(implicit
       parallel: Parallel[IO]
-  ): Endpoint[IO, Journey :+: String :+: CNil] =
-    JourneyCacheEndpoints
+  ): Endpoint[IO, Journey :+: String :+: CNil] = {
+    val endpoints = new JourneyCacheEndpoints(journeyCache, searchRepository)
+
+    endpoints
       .getJourney(
-        journeyCache,
         jwtSecret,
         jwtAlgorithm
-      ) :+: JourneyCacheEndpoints
-      .insertJourney(journeyCache, searchRepository, jwtSecret, jwtAlgorithm)
-
+      ) :+: endpoints
+      .insertJourney(jwtSecret, jwtAlgorithm)
+  }
   def userJourneyHistoryEndpoints(
       journeyCache: JourneyCache,
       searchRepository: SearchRepository,
       jwtSecret: String,
       jwtAlgorithm: String
-  ): Endpoint[IO, UserHistory] =
-    UserJourneyHistoryEndpoints.getJourneyHistory(
-      searchRepository,
-      journeyCache,
+  ): Endpoint[IO, UserHistory] = {
+    val endpoints =
+      new UserJourneyHistoryEndpoints(journeyCache, searchRepository)
+    endpoints.getJourneyHistory(
       jwtSecret,
       jwtAlgorithm
     )
+  }
 }
