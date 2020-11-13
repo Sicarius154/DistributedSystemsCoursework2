@@ -36,7 +36,7 @@ object JourneyCacheEndpoints {
       Support.decodeJwtToken(token, jwtSecret, jwtAlgorithm) match {
         case Right(tokenResult) => {
           for {
-            journey <- repository.getJourneyByPostcodes(start, end)
+            journey <- repository.getJourneyByPostcodes(start, end).value
             res = journey match {
               case Some(journey) => Ok(journey)
               case None          => NoContent

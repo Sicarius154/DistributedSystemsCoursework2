@@ -20,7 +20,7 @@ class HardcodedJourneyCacheSpec
         val validStartPostCode = "E14 9UY"
         val validEndPostCode = "E1, 5JT"
         val res: IO[Option[Journey]] =
-          cache.getJourneyByPostcodes(validStartPostCode, validEndPostCode)
+          cache.getJourneyByPostcodes(validStartPostCode, validEndPostCode).value
 
         res.unsafeRunSync() mustEqual Some(
           HardcodedJourneyCacheSpec.validStartEndPostcodeJourneyResult
@@ -33,7 +33,7 @@ class HardcodedJourneyCacheSpec
       val validStartPostCode = "S14 9JY"
       val validEndPostCode = "E1, 5YT"
       val res: IO[Option[Journey]] =
-        cache.getJourneyByPostcodes(validStartPostCode, validEndPostCode)
+        cache.getJourneyByPostcodes(validStartPostCode, validEndPostCode).value
 
       res.unsafeRunSync() mustEqual None
     }

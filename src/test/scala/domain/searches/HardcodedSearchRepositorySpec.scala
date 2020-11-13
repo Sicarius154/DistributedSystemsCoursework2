@@ -3,7 +3,7 @@ package domain.searches
 import java.util.UUID
 
 import test.TestSupport.withHardcodedSearchRepository
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, Nested}
 import cats.effect.IO
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.must.Matchers
@@ -18,8 +18,10 @@ class HardcodedSearchRepositorySpec
     "return a Non-empty List[Search]" when {
       "one exists in the repository for a user" in withHardcodedSearchRepository() {
         repo: HardcodedSearchRepository =>
-          val res =
-            repo.getUserSearches(HardcodedSearchRepositorySpec.validUserID)
+          val res: IO[List[Search]] =
+            repo
+              .getUserSearches(HardcodedSearchRepositorySpec.validUserID)
+              .value
 
           res.unsafeRunSync() mustEqual Some(
             HardcodedSearchRepositorySpec.validUserIDSearchesNonEmpty
@@ -29,8 +31,12 @@ class HardcodedSearchRepositorySpec
     "return an empty List[Search]" when {
       "no searches exist in the repository for a user" in withHardcodedSearchRepository() {
         repo: HardcodedSearchRepository =>
-          val res =
-            repo.getUserSearches(HardcodedSearchRepositorySpec.validUserIDNoResults)
+          val res: IO[List[Search]] =
+            repo
+              .getUserSearches(
+                HardcodedSearchRepositorySpec.validUserIDNoResults
+              )
+              .value
 
           res.unsafeRunSync() mustEqual Some(
             HardcodedSearchRepositorySpec.validUserIDSearchesEmpty

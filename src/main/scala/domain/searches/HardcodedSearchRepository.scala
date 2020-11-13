@@ -3,7 +3,7 @@ package domain.searches
 import java.util.UUID
 
 import cats.effect.IO
-import cats.data.{EitherT, NonEmptyList}
+import cats.data.{EitherT, NonEmptyList, Nested}
 import domain.{JourneyID, UserID}
 import org.slf4j.{LoggerFactory, Logger}
 
@@ -11,10 +11,10 @@ class HardcodedSearchRepository(implicit val logger: Logger)
     extends SearchRepository {
 
   //TODO: Consider using OptionT[IO, List[Search]]
-  override def getUserSearches(userID: UserID): IO[List[Search]] =
-    IO.pure(HardcodedSearchRepository.repository.filter { search =>
+  override def getUserSearches(userID: UserID): Nested[IO, List, Search] =
+    Nested(IO(HardcodedSearchRepository.repository.filter { search =>
       search.userID.equals(userID)
-    })
+    }))
 
   override def addUserSearch(userID: UserID, journeyID: JourneyID): IO[Unit] = {
     logger.warn(

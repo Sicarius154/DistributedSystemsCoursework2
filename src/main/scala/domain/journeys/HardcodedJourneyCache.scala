@@ -3,25 +3,25 @@ package domain.journeys
 import java.util.UUID
 
 import cats.effect.IO
-import cats.data.{EitherT, NonEmptyList}
-import domain.{Postcode, JourneyID}
+import cats.data.{EitherT, NonEmptyList, OptionT}
+import domain.{JourneyID, Postcode}
 import org.slf4j.{LoggerFactory, Logger}
 
 class HardcodedJourneyCache(implicit val logger: Logger) extends JourneyCache {
   override def getJourneyByPostcodes(
       start: Postcode,
       end: Postcode
-  ): IO[Option[Journey]] =
-    IO.pure(HardcodedJourneyCache.repository.filter { journey =>
+  ): OptionT[IO, Journey] =
+    OptionT.fromOption(HardcodedJourneyCache.repository.filter { journey =>
       journey.start.equals(start) && journey.end.equals(end)
     }.headOption)
 
   override def getJourneyByJourneyID(
       journeyID: JourneyID
-  ): IO[Journey] =
-    IO.pure(HardcodedJourneyCache.repository.filter { journey =>
+  ): OptionT[IO, Journey] =
+    OptionT.fromOption(HardcodedJourneyCache.repository.filter { journey =>
       journey.journeyID.equals(journeyID)
-    }.head)
+    }.headOption)
 
   override def insertJourney(journey: Journey): IO[Unit] = {
     logger.warn(

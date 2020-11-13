@@ -35,12 +35,17 @@ object UserJourneyHistoryEndpoints {
           val userSearches: IO[List[JourneyID]] =
             searchRepository
               .getUserSearches(UUID.fromString(userID))
+              .value //TODO: Remove this, otherwise, why use Nested?
               .map(searches => searches.map(_.journeyID))
 
+
+          //TODO: The following works and is correct, but I'm sure this can be cleaner
           for {
-            userSearches <-
-              userSearches.map(_.map(journeyCache.getJourneyByJourneyID))
-            history <- userSearches.sequence
+            userSearches <- userSearches.map(
+              _.map(journeyCache.getJourneyByJourneyID(_).value)
+            )
+            historyFromDatabase <- userSearches.sequence
+            history = historyFromDatabase.filter(_.isDefined).map(_.get)
           } yield Ok(UserHistory(history))
         }
         case Left(err) => {
