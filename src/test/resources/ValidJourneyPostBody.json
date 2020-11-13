@@ -1,0 +1,17 @@
+{
+  "start": "SE8 8UU",
+  "end": "W1 8LT",
+  "routes": [
+    {
+      "lines": [
+        {
+          "name": "Victoria"
+        },
+        {
+          "name": "Central"
+        }
+      ],
+      "journeyTime": 20
+    }
+  ]
+}

@@ -2,7 +2,9 @@ package web
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
+import cats.Parallel
 import cats.data.NonEmptyList
+import cats.effect.{IO, ContextShift}
 import com.twitter.finagle.http.Status
 import config.Config
 import domain.journeys.{Journey, Line, HardcodedJourneyCache, Route}
@@ -14,6 +16,9 @@ import org.scalatest.concurrent.Eventually
 import test.TestSupport
 import io.circe.syntax._
 import domain.journeys._
+import domain.searches.HardcodedSearchRepository
+
+import scala.concurrent.ExecutionContext
 import scala.io.Source
 
 class JourneyCacheEndpointsSpec
@@ -21,7 +26,11 @@ class JourneyCacheEndpointsSpec
     with Matchers
     with Eventually
     with BeforeAndAfterAll {
-  "/journey" should {
+  private implicit val ec: ExecutionContext = ExecutionContext.global
+  private implicit val cs: ContextShift[IO] = IO.contextShift(ec)
+  private implicit val parallel: Parallel[IO] = IO.ioParallel
+
+  "GET /journey" should {
     "Return 200 OK" when {
       "A valid start and end postcode are submitted" in {
         TestSupport.withHardcodedJourneyCache() {
@@ -108,12 +117,122 @@ class JourneyCacheEndpointsSpec
       }
     }
   }
+
+  "POST /journey" should {
+    "return 200 OK" when {
+      "a valid message is passed with a valid JWT token" in {
+        TestSupport.withHardcodedJourneyCache() { cache: HardcodedJourneyCache =>
+          TestSupport.withHardcodedSearchRepository() { repo: HardcodedSearchRepository =>
+            val req = Input
+              .post(
+                JourneyCacheEndpointsSpec.getJourneyEndpoint,
+              )
+              .withHeaders(
+                "jwt" -> JourneyCacheEndpointsSpec.validJwtToken
+              )
+
+            TestSupport.setReqJsonBodyAndSize(req, JourneyCacheEndpointsSpec.validJourneyPostDataJson)
+
+            eventually {
+              JourneyCacheEndpoints
+                .insertJourney(
+                  cache,
+                  repo,
+                  JourneyCacheEndpointsSpec.jwtSecret,
+                  JourneyCacheEndpointsSpec.jwtAlgorithm
+                )(parallel)(req)
+                .awaitOutputUnsafe()
+                .map(_.status) mustBe Some(Status.Ok)
+            }
+          }
+        }
+      }
+    }
+    "return 406 NotAcceptable" when {
+      "an invalid message is passed " in {
+        TestSupport.withHardcodedJourneyCache() { cache: HardcodedJourneyCache =>
+          TestSupport.withHardcodedSearchRepository() { repo: HardcodedSearchRepository =>
+            val req = Input
+              .post(
+                JourneyCacheEndpointsSpec.getJourneyEndpoint,
+              )
+              .withHeaders(
+                "jwt" -> JourneyCacheEndpointsSpec.validJwtToken
+              )
+
+            TestSupport.setReqJsonBodyAndSize(req, JourneyCacheEndpointsSpec.invalidJourneyPostDataJson)
+
+            eventually {
+              JourneyCacheEndpoints
+                .insertJourney(
+                  cache,
+                  repo,
+                  JourneyCacheEndpointsSpec.jwtSecret,
+                  JourneyCacheEndpointsSpec.jwtAlgorithm
+                )(parallel)(req)
+                .awaitOutputUnsafe()
+                .map(_.status) mustBe Some(Status.NotAcceptable)
+            }
+          }
+        }
+      }
+    }
+
+    "a valid message is passed with a valid JWT token" in {
+      TestSupport.withHardcodedJourneyCache() { cache: HardcodedJourneyCache =>
+        TestSupport.withHardcodedSearchRepository() { repo: HardcodedSearchRepository =>
+          val req = Input
+            .post(
+              JourneyCacheEndpointsSpec.getJourneyEndpoint,
+            )
+            .withHeaders(
+              "jwt" -> JourneyCacheEndpointsSpec.validJwtToken
+            )
+
+          TestSupport.setReqJsonBodyAndSize(req, JourneyCacheEndpointsSpec.validJourneyPostDataJson)
+
+          eventually {
+            JourneyCacheEndpoints
+              .insertJourney(
+                cache,
+                repo,
+                JourneyCacheEndpointsSpec.jwtSecret,
+                JourneyCacheEndpointsSpec.jwtAlgorithm
+              )(parallel)(req)
+              .awaitOutputUnsafe()
+              .map(_.status) mustBe Some(Status.Ok)
+          }
+        }
+      }
+    }
+  }
+
+    "write to the journey cache" when {
+      "a valid message is passed with a valid JWT token" in {
+        //TODO: Need to stub a repo here to test
+      }
+    }
+    "write to the history repository" when {
+      "a valid message is passed with a valid JWT token" in {
+        //TODO: Need to stub a repo here to test
+      }
+    }
 }
 
 object JourneyCacheEndpointsSpec {
   val appConfig: Config = TestSupport.loadConfig
   val jwtSecret: String = appConfig.jwtConfig.secret
   val jwtAlgorithm: String = appConfig.jwtConfig.algorithm
+
+  val validJourneyPostDataJson: String = Source
+    .fromResource("web/ValidJourneyPostBody.json")
+    .getLines()
+    .mkString("")
+
+  val invalidJourneyPostDataJson: String = Source
+    .fromResource("web/InvalidJourneyPostBody.json")
+    .getLines()
+    .mkString("")
 
   val validJwtToken: String =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTmFtZSI6IkNocmlzIiwiaWQiOiIxMWZmNWVlNS02NWM3LTRjY2QtODI2ZC1hZDllNTcyMzhhZGIifQ.qT15VVzzodKVZqcYsI-x2dzkWDnb_KiyRFhRYyY3PPE"
