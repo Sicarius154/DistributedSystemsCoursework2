@@ -9,7 +9,7 @@ resolvers ++= Seq(
   "confluent" at "https://packages.confluent.io/maven/",
   Resolver.mavenLocal
 )
-
+scalacOptions += "-Ypartial-unification"
 lazy val root = (project in file("."))
   .settings(
     organization := "com.chris",
