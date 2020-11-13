@@ -4,7 +4,7 @@ import java.util.UUID
 
 import cats.Parallel
 import cats.data.NonEmptyList
-import domain.{JourneyID, Postcode}
+import domain.{JourneyID, Postcode, UserID}
 import io.finch._
 import io.finch.catsEffect.{jsonBody, post, get}
 import io.finch.{NoContent, Endpoint, Ok}
@@ -61,23 +61,12 @@ object JourneyCacheEndpoints {
         Support.decodeJwtToken(token, jwtSecret, jwtAlgorithm) match {
           case Right(tokenResult) => {
             val validatedJourney = createJourneyFromInput(insertJourneyRequest)
-            validatedJourney match {
-              case Some(journey) => {
-                for {
-                  _ <- List[IO[Unit]](
-                    cache.insertJourney(journey),
-                    searchRepository.addUserSearch(
-                      tokenResult.id,
-                      journey.journeyID
-                    )
-                  ).parSequence
-                } yield Ok("OK!")
-              }
-              case None => {
-                log.error(s"Error creating Journey")
-                IO(NotAcceptable(new Exception()))
-              }
-            }
+            writeNewJourney(
+              cache,
+              searchRepository,
+              tokenResult.id,
+              validatedJourney
+            )
           }
           case Left(err) => {
             log.error(s"Error decoding JWT token. Returning HTTP 406")
@@ -86,6 +75,32 @@ object JourneyCacheEndpoints {
         }
 
     }
+
+  private def writeNewJourney(
+      cache: JourneyCache,
+      searchRepository: SearchRepository,
+      userID: UserID,
+      validatedJourney: Option[Journey]
+  )(implicit parallel: Parallel[IO]): IO[Output[Postcode]] = {
+    validatedJourney match {
+      case Some(journey) => {
+        for {
+          _ <- List[IO[Unit]](
+            cache.insertJourney(journey),
+            searchRepository.addUserSearch(
+              userID,
+              journey.journeyID
+            )
+          ).parSequence
+        } yield Ok("OK!")
+      }
+      case None => {
+        log.error(s"Error creating Journey")
+        IO(NotAcceptable(new Exception()))
+      }
+    }
+
+  }
 
   private def createJourneyFromInput(
       insertJourneyRequest: InsertJourneyRequest
