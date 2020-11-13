@@ -1,8 +1,6 @@
 package web
 
-import java.util.UUID
-
-import domain.JourneyID
+import domain.{JourneyID, UserID}
 import cats.implicits._
 import io.finch._
 import io.finch.catsEffect.get
@@ -33,20 +31,11 @@ object UserJourneyHistoryEndpoints {
           log.info(s"Decoded JWT token and obtained user ID $userID")
 
           val userSearches: IO[List[JourneyID]] =
-            searchRepository
-              .getUserSearches(UUID.fromString(userID))
-              .value //TODO: Remove this, otherwise, why use Nested?
-              .map(searches => searches.map(_.journeyID))
+            getUserSearchHistory(tokenResult.id, searchRepository)
 
-
-          //TODO: The following works and is correct, but I'm sure this can be cleaner
           for {
-            userSearches <- userSearches.map(
-              _.map(journeyCache.getJourneyByJourneyID(_).value)
-            )
-            historyFromDatabase <- userSearches.sequence
-            history = historyFromDatabase.filter(_.isDefined).map(_.get)
-          } yield Ok(UserHistory(history))
+            history <- userSearchHistoryToJourneys(userSearches, journeyCache)
+          } yield Ok(history)
         }
         case Left(err) => {
           log.error(s"Error decoding JWT token. Returning HTTP 406")
@@ -54,4 +43,26 @@ object UserJourneyHistoryEndpoints {
         }
       }
     }
+
+  //TODO: The following works and is correct, but I'm sure this can be cleaner
+  private def userSearchHistoryToJourneys(
+      userSearches: IO[List[JourneyID]],
+      journeyCache: JourneyCache
+  ): IO[UserHistory] =
+    for {
+      userSearches <- userSearches.map(
+        _.map(journeyCache.getJourneyByJourneyID(_).value)
+      )
+      historyFromDatabase <- userSearches.sequence
+      history = historyFromDatabase.filter(_.isDefined).map(_.get)
+    } yield UserHistory(history)
+
+  private def getUserSearchHistory(
+      userID: UserID,
+      searchRepository: SearchRepository
+  ): IO[List[JourneyID]] =
+    searchRepository
+      .getUserSearches(userID)
+      .value //TODO: Remove this, otherwise, why use Nested?
+      .map(searches => searches.map(_.journeyID))
 }

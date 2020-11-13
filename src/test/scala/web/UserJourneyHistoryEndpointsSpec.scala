@@ -65,7 +65,7 @@ object UserJourneyHistoryEndpointsSpec {
 
   val validUserHistory: List[Journey] = List[Journey](
     Journey(
-      UUID.fromString("a55eb972-7c5d-43b4-8a33-6be2fb371dba"),
+      "a55eb972-7c5d-43b4-8a33-6be2fb371dba",
       "E14 9UY",
       "E1, 5JT",
       NonEmptyList
@@ -80,7 +80,7 @@ object UserJourneyHistoryEndpointsSpec {
       includesNoChangeRoute = true
     ),
     Journey(
-      UUID.fromString("3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1"),
+      "3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1",
       "ME7 2EJ",
       "SW1A VC1",
       NonEmptyList

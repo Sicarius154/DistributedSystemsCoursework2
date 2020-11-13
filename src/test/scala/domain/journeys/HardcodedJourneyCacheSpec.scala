@@ -51,7 +51,7 @@ class HardcodedJourneyCacheSpec
 
 object HardcodedJourneyCacheSpec {
   val validStartEndPostcodeJourneyResult: Journey = Journey(
-    UUID.fromString("a55eb972-7c5d-43b4-8a33-6be2fb371dba"),
+    "a55eb972-7c5d-43b4-8a33-6be2fb371dba",
     "E14 9UY",
     "E1, 5JT",
     NonEmptyList
@@ -67,7 +67,7 @@ object HardcodedJourneyCacheSpec {
   )
 
   val validStartEndPostcodeJourneyInsertion: Journey = Journey(
-    UUID.randomUUID(),
+    UUID.randomUUID().toString,
     "W14 7UY",
     "E15, 9JH",
     NonEmptyList

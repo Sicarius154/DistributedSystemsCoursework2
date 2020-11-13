@@ -1,7 +1,5 @@
 package domain.journeys
 
-import java.util.UUID
-
 import cats.effect.IO
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import domain.{JourneyID, Postcode}
@@ -37,7 +35,7 @@ object HardcodedJourneyCache {
 
   private val repository = NonEmptyList.of(
     Journey(
-      UUID.fromString("3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1"),
+      "3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1",
       "ME7 2EJ",
       "SW1A VC1",
       NonEmptyList
@@ -49,7 +47,7 @@ object HardcodedJourneyCache {
       includesNoChangeRoute = false
     ),
     Journey(
-      UUID.fromString("a55eb972-7c5d-43b4-8a33-6be2fb371dba"),
+      "a55eb972-7c5d-43b4-8a33-6be2fb371dba",
       "E14 9UY",
       "E1, 5JT",
       NonEmptyList
@@ -64,7 +62,7 @@ object HardcodedJourneyCache {
       includesNoChangeRoute = true
     ),
     Journey(
-      UUID.fromString("c7f673a8-8d5d-4941-8575-13aeed66b59f"),
+      "c7f673a8-8d5d-4941-8575-13aeed66b59f",
       "SE8 5JT",
       "SW1A Y6T",
       NonEmptyList

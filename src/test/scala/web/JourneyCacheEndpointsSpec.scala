@@ -1,6 +1,5 @@
 package web
 import java.nio.charset.StandardCharsets
-import java.util.UUID
 
 import cats.Parallel
 import cats.data.NonEmptyList
@@ -241,7 +240,7 @@ object JourneyCacheEndpointsSpec {
     "ayJhbGciOiJIUzH1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTmFtZSI6IkNocmlzIiwiaWQiOiIxMWZmNWVlNS02NWM3LTRjY2QtODI2ZC1hZDllNTcyMzhhZGIifQ.qT15VVzzodKVZqcYsI-x2dzkWDnb_KiyRFhRYyY3PPE"
 
   val validPostcodesResult: Journey = Journey(
-    UUID.fromString("3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1"),
+    "3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1",
     "ME7 2EJ",
     "SW1A VC1",
     NonEmptyList

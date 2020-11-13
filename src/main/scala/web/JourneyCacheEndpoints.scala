@@ -107,7 +107,7 @@ object JourneyCacheEndpoints {
   private def createJourneyFromInput(
       insertJourneyRequest: InsertJourneyRequest
   ): Option[Journey] = {
-    val journeyUUID: JourneyID = UUID.randomUUID()
+    val journeyUUID: JourneyID = UUID.randomUUID().toString
 
     //TODO: Look into using Monocle for this
     val lineNamesFiltered: List[(Option[NonEmptyList[Line]], Int)] =

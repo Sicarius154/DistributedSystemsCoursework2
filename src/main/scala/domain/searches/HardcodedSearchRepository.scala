@@ -1,7 +1,5 @@
 package domain.searches
 
-import java.util.UUID
-
 import cats.effect.IO
 import cats.data.{EitherT, NonEmptyList, Nested}
 import domain.{JourneyID, UserID}
@@ -31,20 +29,20 @@ object HardcodedSearchRepository {
   private val repository =
     NonEmptyList.of(
       Search(
-        UUID.fromString("f31c9cab-2f49-4040-931a-8c82600a903f"),
-        UUID.fromString("3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1")
+        "f31c9cab-2f49-4040-931a-8c82600a903f",
+        "3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1"
       ),
       Search(
-        UUID.fromString("613ae23f-caad-438e-a5ea-d8bd50fbe91d"),
-        UUID.fromString("a55eb972-7c5d-43b4-8a33-6be2fb371dba")
+        "613ae23f-caad-438e-a5ea-d8bd50fbe91d",
+        "a55eb972-7c5d-43b4-8a33-6be2fb371dba"
       ),
       Search(
-        UUID.fromString("11ff5ee5-65c7-4ccd-826d-ad9e57238adb"),
-        UUID.fromString("a55eb972-7c5d-43b4-8a33-6be2fb371dba")
+        "11ff5ee5-65c7-4ccd-826d-ad9e57238adb",
+        "a55eb972-7c5d-43b4-8a33-6be2fb371dba"
       ),
       Search(
-        UUID.fromString("11ff5ee5-65c7-4ccd-826d-ad9e57238adb"),
-        UUID.fromString("3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1")
+        "11ff5ee5-65c7-4ccd-826d-ad9e57238adb",
+        "3bde7cb0-c1dd-42ca-b1d6-a5e2d5662ef1"
       )
     )
 
