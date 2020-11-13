@@ -1,5 +1,6 @@
 package web
 
+import cats.Parallel
 import cats.effect.IO
 import domain.journeys.{JourneyCache, Journey}
 import domain.searches.SearchRepository
@@ -12,9 +13,12 @@ object Endpoints {
       searchRepository: SearchRepository,
       jwtSecret: String,
       jwtAlgorithm: String
+  )(implicit
+      parallel: Parallel[IO]
   ): Endpoint[IO, Journey :+: String :+: UserHistory :+: CNil] =
     journeyCacheEndpoints(
       journeyCache,
+      searchRepository,
       jwtSecret,
       jwtAlgorithm
     ) :+: userJourneyHistoryEndpoints(
@@ -26,8 +30,11 @@ object Endpoints {
 
   def journeyCacheEndpoints(
       journeyCache: JourneyCache,
+      searchRepository: SearchRepository,
       jwtSecret: String,
       jwtAlgorithm: String
+  )(implicit
+      parallel: Parallel[IO]
   ): Endpoint[IO, Journey :+: String :+: CNil] =
     JourneyCacheEndpoints
       .getJourney(
@@ -35,7 +42,7 @@ object Endpoints {
         jwtSecret,
         jwtAlgorithm
       ) :+: JourneyCacheEndpoints
-      .insertJourney(journeyCache, jwtSecret, jwtAlgorithm)
+      .insertJourney(journeyCache, searchRepository, jwtSecret, jwtAlgorithm)
 
   def userJourneyHistoryEndpoints(
       journeyCache: JourneyCache,

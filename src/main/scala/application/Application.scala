@@ -2,6 +2,7 @@ package application
 
 import domain.journeys
 import cats.Applicative.ops.toAllApplicativeOps
+import cats.Parallel
 import cats.effect.{ContextShift, Blocker, Resource, ExitCode, IO}
 import com.twitter.finagle.{ListeningServer, Service, Http}
 import com.twitter.finagle.http.{Request, Response}
@@ -19,7 +20,7 @@ import pureconfig.generic.auto._
 
 import scala.concurrent.ExecutionContext
 
-class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO]) {
+class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO], parallel: Parallel[IO]) {
   private val logger: Logger = LoggerFactory.getLogger("Application")
 
   def execute(): IO[ExitCode] = {

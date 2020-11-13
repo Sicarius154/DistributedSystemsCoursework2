@@ -1,7 +1,7 @@
 package web
 
-import domain.journeys.Journey
-import domain.UserID
+import domain.journeys.{Journey, Route}
+import domain.{UserID, Postcode}
 
-case class InsertJourneyRequest(journey: Journey, userID: UserID)
+case class InsertJourneyRequest(start: Postcode, end: Postcode, routes: List[Route])
 
