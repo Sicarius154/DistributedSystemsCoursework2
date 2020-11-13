@@ -60,6 +60,7 @@ object JourneyCacheEndpoints {
       (insertJourneyRequest: InsertJourneyRequest, token: String) =>
         Support.decodeJwtToken(token, jwtSecret, jwtAlgorithm) match {
           case Right(tokenResult) => {
+            log.info("Validating new Journey")
             val validatedJourney = createJourneyFromInput(insertJourneyRequest)
             writeNewJourney(
               cache,
@@ -84,6 +85,7 @@ object JourneyCacheEndpoints {
   )(implicit parallel: Parallel[IO]): IO[Output[Postcode]] = {
     validatedJourney match {
       case Some(journey) => {
+        log.info("Writing new Journey")
         for {
           _ <- List[IO[Unit]](
             cache.insertJourney(journey),
