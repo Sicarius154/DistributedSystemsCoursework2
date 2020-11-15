@@ -12,7 +12,7 @@ import org.slf4j.{LoggerFactory, Logger}
 import pureconfig.ConfigSource
 import com.twitter.util.Future
 import domain.journeys.{JourneyCache, HardcodedJourneyCache, PersistentJourneyCache}
-import domain.searches.HardcodedSearchRepository
+import domain.searches.{PersistentSearchRepository, HardcodedSearchRepository, SearchRepository}
 import web.Endpoints
 import io.finch.circe._
 import io.circe.generic.auto._
@@ -20,7 +20,11 @@ import pureconfig.generic.auto._
 
 import scala.concurrent.ExecutionContext
 
-class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO], parallel: Parallel[IO]) {
+class Application()(implicit
+    ec: ExecutionContext,
+    cs: ContextShift[IO],
+    parallel: Parallel[IO]
+) {
   private val logger: Logger = LoggerFactory.getLogger("Application")
 
   def execute(): IO[ExitCode] = {
@@ -29,20 +33,24 @@ class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO], paralle
     val conf = loadConfig
 
     for {
-      serverRes <- PersistentJourneyCache(conf.databaseConfig).flatMap { journeyCache =>
-        HardcodedSearchRepository().map { searchRepository =>
-          val server =
-            Resource.make(
-              serve(
-                journeyCache,
-                searchRepository,
-                conf.journeyCacheServiceConfig.port,
-                conf.jwtConfig.secret,
-                conf.jwtConfig.algorithm
-              )
-            )(s => IO.suspend(implicitly[ToAsync[Future, IO]].apply(s.close())))
-          server.use(_ => IO.never).as(ExitCode.Success)
-        }
+      serverRes <- PersistentJourneyCache(conf.databaseConfig).flatMap {
+        journeyCache =>
+          PersistentSearchRepository(conf.databaseConfig).map {
+            searchRepository =>
+              val server =
+                Resource.make(
+                  serve(
+                    journeyCache,
+                    searchRepository,
+                    conf.journeyCacheServiceConfig.port,
+                    conf.jwtConfig.secret,
+                    conf.jwtConfig.algorithm
+                  )
+                )(s =>
+                  IO.suspend(implicitly[ToAsync[Future, IO]].apply(s.close()))
+                )
+              server.use(_ => IO.never).as(ExitCode.Success)
+          }
       }.value
 
       res <- serverRes match {
@@ -57,7 +65,7 @@ class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO], paralle
 
   private def serve(
       journeyCache: JourneyCache,
-      searchRepository: HardcodedSearchRepository,
+      searchRepository: SearchRepository,
       portNumber: Int,
       jwtSecret: String,
       jwtAlgorithm: String
@@ -72,7 +80,7 @@ class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO], paralle
 
   private def service(
       journeyCache: JourneyCache,
-      searchRepository: HardcodedSearchRepository,
+      searchRepository: SearchRepository,
       jwtSecret: String,
       jwtAlgorithm: String
   ): Service[Request, Response] =

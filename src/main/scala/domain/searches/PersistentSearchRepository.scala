@@ -1,4 +1,5 @@
-package domain.journeys
+package domain.searches
+
 import java.util.concurrent.Executors
 
 import io.circe.generic.auto._
@@ -6,7 +7,7 @@ import io.circe.parser._
 import cats.implicits._
 import io.circe.syntax._
 import cats.data.EitherT
-import domain.{JourneyID, Postcode}
+import domain.{JourneyID, Postcode, UserID}
 import doobie.{Query0, Transactor}
 import cats.effect.{ContextShift, IO, Blocker}
 import cats._
@@ -25,99 +26,48 @@ import org.slf4j.{LoggerFactory, Logger}
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 //TODO: Use prepared statements
-object PersistedJourneyCacheQueries {
-  def getJourneyByIdQuery(id: String): Query0[JourneyDbResult] =
-    sql"""SELECT "journeyid", "start", "end", "blob" FROM journeys.journey WHERE journeyid = $id"""
-      .query[JourneyDbResult]
-
-  def getJourneyByPostcodesQuery(
-      start: Postcode,
-      end: Postcode
-  ): Query0[JourneyDbResult] =
-    sql"""SELECT "journeyid", "start", "end", "blob" FROM journeys.journey WHERE start = $start AND "end" = $end"""
-      .query[JourneyDbResult]
-
-  def insertNewJourney(
-      journeyID: JourneyID,
-      start: Postcode,
-      end: Postcode,
-      blob: String
+object PersistedSearchRepositoryQueries {
+  def insertNewSearch(
+      userID: UserID,
+      journeyID: JourneyID
   ): doobie.ConnectionIO[Int] =
-    sql"""INSERT INTO journeys.journey("journeyid", "start", "end", "blob") VALUES($journeyID, $start, $end, $blob)""".update.run
+    sql"""INSERT INTO journeys.search("journeyid", "userid") VALUES($journeyID, $userID)""".update.run
+
+  def getUserSearchesByUserID(userID: UserID): doobie.Query0[Search] =
+    sql"""SELECT "journeyid", "userid" FROM journeys.search WHERE "userid" = $userID"""
+      .query[Search]
 }
 
-class PersistentJourneyCache(transactor: Transactor[IO]) extends JourneyCache {
-  private val logger: Logger = LoggerFactory.getLogger("PersistentJourneyCache")
-  private def resultToJourney(journeyResult: JourneyDbResult): Option[Journey] =
-    for {
-      blob <- decode[JourneyDbResultBlob](journeyResult.blob).toOption
-      _ = logger.info(s"Decoding DB result from journey table")
-      routes <- NonEmptyList.fromList(blob.routes)
-    } yield Journey(
-      journeyResult.journeyID,
-      journeyResult.start,
-      journeyResult.end,
-      routes,
-      blob.meanJourneyTime,
-      blob.includesNoChangeRoute
-    )
-
-  override def getJourneyByPostcodes(
-      start: Postcode,
-      end: Postcode
-  ): OptionT[IO, Journey] =
-    OptionT(
-      PersistedJourneyCacheQueries
-        .getJourneyByPostcodesQuery(start, end)
+class PersistentSearchRepository(transactor: Transactor[IO])(implicit
+    logger: Logger
+) extends SearchRepository {
+  override def getUserSearches(userID: UserID): Nested[IO, List, Search] =
+    Nested(
+      PersistedSearchRepositoryQueries
+        .getUserSearchesByUserID(userID)
         .to[List]
         .transact(transactor)
-        .map(dbResult => resultToJourney(dbResult.head))
-    ) //TODO: Handle when no head
-
-  override def getJourneyByJourneyID(
-      journeyID: JourneyID
-  ): OptionT[IO, Journey] =
-    OptionT(
-      PersistedJourneyCacheQueries
-        .getJourneyByIdQuery(journeyID)
-        .to[List]
-        .transact(transactor)
-        .map(dbResult =>
-          resultToJourney(dbResult.head)
-        ) //TODO: Handle when no head
-    )
-  override def insertJourney(journey: Journey): IO[Unit] = {
-    logger.info(s"Inserting into journeys table ID ${journey.journeyID}")
-
-    val blob = JourneyDbResultBlob(
-      journey.routes.toList,
-      journey.meanJourneyTime,
-      journey.includesNoChangeRoute
     )
 
-    PersistedJourneyCacheQueries
-      .insertNewJourney(
-        journey.journeyID,
-        journey.start,
-        journey.end,
-        blob.asJson.toString
-      )
+  override def addUserSearch(userID: UserID, journeyID: JourneyID): IO[Unit] =
+    PersistedSearchRepositoryQueries
+      .insertNewSearch(userID, journeyID)
       .transact(transactor)
       .map(_ => ())
-  }
 }
 
-object PersistentJourneyCache {
-  val logger: Logger = LoggerFactory.getLogger("PersistedJourneyCache")
+object PersistentSearchRepository {
+  private implicit val logger: Logger =
+    LoggerFactory.getLogger("PersistedSearchRepository")
 
   def apply(
       databaseConfig: DatabaseConfig
   )(implicit
       ec: ExecutionContext,
       cs: ContextShift[IO]
-  ): EitherT[IO, String, PersistentJourneyCache] =
+  ): EitherT[IO, String, PersistentSearchRepository] =
     hikariTransactor(databaseConfig)
-      .map(transactor => new PersistentJourneyCache(transactor))
+      .map(transactor => new PersistentSearchRepository(transactor))
 
   private def databaseExecutionContext(
       poolSize: Int
