@@ -8,7 +8,6 @@ import org.slf4j.{LoggerFactory, Logger}
 class HardcodedSearchRepository(implicit val logger: Logger)
     extends SearchRepository {
 
-  //TODO: Consider using OptionT[IO, List[Search]]
   override def getUserSearches(userID: UserID): Nested[IO, List, Search] =
     Nested(IO(HardcodedSearchRepository.repository.filter { search =>
       search.userID.equals(userID)

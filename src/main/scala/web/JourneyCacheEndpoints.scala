@@ -113,7 +113,7 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
 
     val routes: List[Route] = lineNamesFiltered
       .filter(input => input._1.isDefined)
-      .map(input =>
+      .map((input: (Option[NonEmptyList[Line]], Int)) =>
         Route(input._1.get, input._2)
       ) //TODO: Clean this up to remove .get()
 

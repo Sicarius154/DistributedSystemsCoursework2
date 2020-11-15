@@ -12,7 +12,10 @@ import io.finch.catsEffect._
 import web._
 import org.slf4j.{LoggerFactory, Logger}
 
-class UserJourneyHistoryEndpoints(journeyCache: JourneyCache, searchRepository: SearchRepository) {
+class UserJourneyHistoryEndpoints(
+    journeyCache: JourneyCache,
+    searchRepository: SearchRepository
+) {
   private val log: Logger = LoggerFactory.getLogger("HistoryEndpoints")
 
   //TODO: Tidy this function up
@@ -22,19 +25,10 @@ class UserJourneyHistoryEndpoints(journeyCache: JourneyCache, searchRepository: 
   ): Endpoint[IO, UserHistory] =
     get("history" :: header[String]("jwt")) { token: String =>
       log.info(s"GET Request received for user journey history")
-
       Support.decodeJwtToken(token, jwtSecret, jwtAlgorithm) match {
-        case Right(tokenResult) => {
-          val userID: String = tokenResult.id.toString
-          log.info(s"Decoded JWT token and obtained user ID $userID")
-
-          val userSearches: IO[List[JourneyID]] =
-            getUserSearchHistory(tokenResult.id)
-
-          for {
-            history <- userSearchHistoryToJourneys(userSearches)
-          } yield Ok(history)
-        }
+        case Right(tokenResult) =>
+          userSearchHistoryToJourneys(getUserSearchHistory(tokenResult.id))
+              .map(history => Ok(history))
         case Left(err) => {
           log.error(s"Error decoding JWT token. Returning HTTP 406")
           IO(NotAcceptable(new Exception(err)))
@@ -44,7 +38,7 @@ class UserJourneyHistoryEndpoints(journeyCache: JourneyCache, searchRepository: 
 
   //TODO: The following works and is correct, but I'm sure this can be cleaner
   private def userSearchHistoryToJourneys(
-      userSearches: IO[List[JourneyID]],
+      userSearches: IO[List[JourneyID]]
   ): IO[UserHistory] =
     for {
       userSearches <- userSearches.map(
@@ -55,7 +49,7 @@ class UserJourneyHistoryEndpoints(journeyCache: JourneyCache, searchRepository: 
     } yield UserHistory(history)
 
   private def getUserSearchHistory(
-      userID: UserID,
+      userID: UserID
   ): IO[List[JourneyID]] =
     searchRepository
       .getUserSearches(userID)
