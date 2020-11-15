@@ -1,9 +1,7 @@
 package domain.journeys
 
-import cats.data.NonEmptyList
-
 case class JourneyDbResultBlob(
-    routes: NonEmptyList[Route],
+    routes: List[Route],
     meanJourneyTime: Int,
     includesNoChangeRoute: Boolean
 )

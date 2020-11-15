@@ -2,4 +2,4 @@ package domain.journeys
 
 import cats.data.NonEmptyList
 
-case class Route(lines: NonEmptyList[Line], journeyTime: Int)
+case class Route(orderedLines: NonEmptyList[Line], journeyTime: Int)

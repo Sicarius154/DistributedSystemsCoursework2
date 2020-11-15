@@ -106,7 +106,7 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
     val lineNamesFiltered: List[(Option[NonEmptyList[Line]], Int)] =
       insertJourneyRequest.routes.map(route =>
         (
-          NonEmptyList.fromList(route.lines.filterNot(_.name.equals(""))),
+          NonEmptyList.fromList(route.orderedLines.filterNot(_.name.equals(""))),
           route.journeyTime
         )
       )
@@ -120,7 +120,7 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
     val meanJourneyTime =
       routes.map(_.journeyTime).sum / routes.length
 
-    val includesNoChangeRoute = routes.exists(_.lines.length == 1)
+    val includesNoChangeRoute = routes.exists(_.orderedLines.length == 1)
 
     if (routes.nonEmpty)
       Some(

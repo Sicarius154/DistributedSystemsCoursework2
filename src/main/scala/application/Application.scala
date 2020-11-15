@@ -11,7 +11,7 @@ import io.finch.{Bootstrap, Application, ToAsync}
 import org.slf4j.{LoggerFactory, Logger}
 import pureconfig.ConfigSource
 import com.twitter.util.Future
-import domain.journeys.{JourneyCache, HardcodedJourneyCache}
+import domain.journeys.{JourneyCache, HardcodedJourneyCache, PersistentJourneyCache}
 import domain.searches.HardcodedSearchRepository
 import web.Endpoints
 import io.finch.circe._
@@ -29,7 +29,7 @@ class Application()(implicit ec: ExecutionContext, cs: ContextShift[IO], paralle
     val conf = loadConfig
 
     for {
-      serverRes <- HardcodedJourneyCache().flatMap { journeyCache =>
+      serverRes <- PersistentJourneyCache(conf.databaseConfig).flatMap { journeyCache =>
         HardcodedSearchRepository().map { searchRepository =>
           val server =
             Resource.make(
