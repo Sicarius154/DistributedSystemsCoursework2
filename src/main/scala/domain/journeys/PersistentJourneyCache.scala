@@ -3,8 +3,8 @@ import java.util.concurrent.Executors
 
 import io.circe.generic.auto._
 import io.circe.parser._
-
 import cats.implicits._
+import io.circe.syntax._
 import cats.data.EitherT
 import domain.{JourneyID, Postcode}
 import doobie.{Query0, Transactor}
@@ -21,7 +21,8 @@ import doobie.implicits.toSqlInterpolator
 import io.circe.Json
 import org.postgresql.util.PSQLException
 import org.slf4j.{LoggerFactory, Logger}
-import scala.concurrent.ExecutionContext
+
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 //TODO: Use prepared statements
 object PersistedJourneyCacheQueries {
@@ -35,6 +36,14 @@ object PersistedJourneyCacheQueries {
   ): Query0[JourneyDbResult] =
     sql"""SELECT "journeyID", "start", "end", "blob" FROM journeys.journey WHERE start = $start AND "end" = $end"""
       .query[JourneyDbResult]
+
+  def insertNewJourney(
+      journeyID: JourneyID,
+      start: Postcode,
+      end: Postcode,
+      blob: String
+  ): doobie.ConnectionIO[Int] =
+    sql"""INSERT INTO journeys.journey("journeyID", "start", "end", "blob") VALUES($journeyID, $start, $end, $blob)""".update.run
 }
 
 class PersistentJourneyCache(transactor: Transactor[IO]) extends JourneyCache {
@@ -77,7 +86,25 @@ class PersistentJourneyCache(transactor: Transactor[IO]) extends JourneyCache {
           resultToJourney(dbResult.head)
         ) //TODO: Handle when no head
     )
-  override def insertJourney(journey: Journey): IO[Unit] = ???
+  override def insertJourney(journey: Journey): IO[Unit] = {
+    logger.info(s"Inserting into journeys table ID ${journey.journeyID}")
+
+    val blob = JourneyDbResultBlob(
+      journey.routes.toList,
+      journey.meanJourneyTime,
+      journey.includesNoChangeRoute
+    )
+
+    PersistedJourneyCacheQueries
+      .insertNewJourney(
+        journey.journeyID,
+        journey.start,
+        journey.end,
+        blob.asJson.toString
+      )
+      .transact(transactor)
+      .map(_ => ())
+  }
 }
 
 object PersistentJourneyCache {
@@ -92,6 +119,13 @@ object PersistentJourneyCache {
     hikariTransactor(databaseConfig)
       .map(transactor => new PersistentJourneyCache(transactor))
 
+  private def databaseExecutionContext(
+      poolSize: Int
+  ): ExecutionContextExecutor =
+    ExecutionContext.fromExecutor(
+      Executors.newFixedThreadPool(poolSize)
+    )
+
   private def hikariTransactor(
       databaseConfig: DatabaseConfig
   )(implicit
@@ -100,9 +134,7 @@ object PersistentJourneyCache {
   ): EitherT[IO, String, HikariTransactor[IO]] =
     EitherT(
       IO {
-        val databaseExecutionContext = ExecutionContext.fromExecutor(
-          Executors.newFixedThreadPool(databaseConfig.connection.poolSize)
-        )
+        val dbEc = databaseExecutionContext(databaseConfig.connection.poolSize)
 
         val hikariConfig = new HikariConfig()
         hikariConfig.setJdbcUrl(databaseConfig.connection.connectionString)
@@ -115,19 +147,18 @@ object PersistentJourneyCache {
             new HikariDataSource(hikariConfig),
             ec,
             Blocker.liftExecutionContext(
-              databaseExecutionContext
+              dbEc
             )
           )
         )
       }.redeem(
-        handleHikariTransactorAcquisitionError(
-          _,
-          databaseConfig.connection.connectionString
-        ),
-        { transactor =>
-          logger.info("Acquired database transactor")
-          transactor
-        }
+        (ex: Throwable) =>
+          handleHikariTransactorAcquisitionError(
+            ex,
+            databaseConfig.connection.connectionString
+          ),
+        (acq: Right[String, HikariTransactor[IO]]) =>
+          handleHikariTransactorAcquisition(acq)
       )
     )
 
@@ -147,5 +178,12 @@ object PersistentJourneyCache {
         logger.error(s"Unknown exception...")
     }
     Left(ex.getMessage)
+  }
+
+  private def handleHikariTransactorAcquisition(
+      transactor: Either[String, HikariTransactor[IO]]
+  ): Either[String, HikariTransactor[IO]] = {
+    logger.info("Acquired database transactor")
+    transactor
   }
 }
