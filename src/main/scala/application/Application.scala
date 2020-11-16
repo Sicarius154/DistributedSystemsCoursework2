@@ -32,35 +32,35 @@ class Application()(implicit
 
     val conf = loadConfig
 
-    for {
-      serverRes <- PersistentJourneyCache(conf.databaseConfig).flatMap {
-        journeyCache =>
-          PersistentSearchRepository(conf.databaseConfig).map {
-            searchRepository =>
-              val server =
-                Resource.make(
-                  serve(
-                    journeyCache,
-                    searchRepository,
-                    conf.journeyCacheServiceConfig.port,
-                    conf.jwtConfig.secret,
-                    conf.jwtConfig.algorithm
-                  )
-                )(s =>
-                  IO.suspend(implicitly[ToAsync[Future, IO]].apply(s.close()))
+    PersistentJourneyCache(conf.databaseConfig).flatMap {
+      journeyCache =>
+        PersistentSearchRepository(conf.databaseConfig).map {
+          searchRepository =>
+            val server =
+              Resource.make(
+                serve(
+                  journeyCache,
+                  searchRepository,
+                  conf.journeyCacheServiceConfig.port,
+                  conf.jwtConfig.secret,
+                  conf.jwtConfig.algorithm
                 )
-              server.use(_ => IO.never).as(ExitCode.Success)
-          }
-      }.value
-
-      res <- serverRes match {
-        case Right(code) => code
-        case Left(err: String) => {
-          logger.error(s"Exiting with error: $err")
-          IO.pure(ExitCode.Error)
+              )(s =>
+                IO.suspend(implicitly[ToAsync[Future, IO]].apply(s.close()))
+              )
+            server.use(_ => IO.never).as(ExitCode.Success)
         }
-      }
-    } yield res
+    }.value
+      .flatMap(serverRes =>
+        (serverRes match {
+          case Right(code) => code
+          case Left(err: String) => {
+            logger.error(s"Exiting with error: $err")
+            IO.pure(ExitCode.Error)
+          }
+        })
+          .map(res => res)
+      )
   }
 
   private def serve(

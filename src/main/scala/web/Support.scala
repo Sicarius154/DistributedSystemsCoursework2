@@ -4,7 +4,7 @@ import domain.UserID
 import io.circe.{Encoder, Decoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
-case class TokenResult(id: UserID, userName: String)
+case class TokenResult(id: UserID, username: String)
 
 object Support {
   private implicit val tokenDecoder: Decoder[TokenResult] =
