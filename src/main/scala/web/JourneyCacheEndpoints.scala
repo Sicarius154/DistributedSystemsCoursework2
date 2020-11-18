@@ -19,7 +19,10 @@ import org.slf4j.{LoggerFactory, Logger}
 
 import scala.concurrent.ExecutionContext
 
-class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: SearchRepository) {
+class JourneyCacheEndpoints(
+    journeyCache: JourneyCache,
+    searchRepository: SearchRepository
+) {
   private val log: Logger = LoggerFactory.getLogger("JourneyEndpoints")
 
   def getJourney(
@@ -40,11 +43,14 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
               case Some(journey) => Ok(journey)
               case None          => NoContent
             }
-          } yield res
+          } yield res.withHeaders(Map[String, String]("Access-Control-Allow-Origin" -> "*"))
         }
         case Left(err) => {
           log.error(s"Error decoding JWT token. Returning HTTP 406")
-          IO(NotAcceptable(new Exception(err)))
+          IO(
+            NotAcceptable(new Exception(err))
+              .withHeaders(Map[String, String]("Access-Control-Allow-Origin" -> "*"))
+          )
         }
       }
     }
@@ -66,7 +72,7 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
           }
           case Left(err) => {
             log.error(s"Error decoding JWT token. Returning HTTP 406")
-            IO(NotAcceptable(new Exception(err)))
+            IO(NotAcceptable(new Exception(err)).withHeaders(Map[String, String]("Access-Control-Allow-Origin" -> "*")))
           }
         }
 
@@ -106,7 +112,9 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
     val lineNamesFiltered: List[(Option[NonEmptyList[Line]], Int)] =
       insertJourneyRequest.routes.map(route =>
         (
-          NonEmptyList.fromList(route.orderedLines.filterNot(_.name.equals(""))),
+          NonEmptyList.fromList(
+            route.orderedLines.filterNot(_.name.equals(""))
+          ),
           route.journeyTime
         )
       )
