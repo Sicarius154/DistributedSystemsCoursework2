@@ -23,7 +23,7 @@ class UserJourneyHistoryEndpoints(
       jwtSecret: String,
       jwtAlgorithm: String
   ): Endpoint[IO, UserHistory] =
-    get("history" :: header[String]("jwt")) { token: String =>
+    get("history" :: param[String]("jwt")) { token: String =>
       log.info(s"GET Request received for user journey history")
       Support.decodeJwtToken(token, jwtSecret, jwtAlgorithm) match {
         case Right(tokenResult) =>

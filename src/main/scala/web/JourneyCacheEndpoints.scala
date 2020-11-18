@@ -27,7 +27,7 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
       jwtAlgorithm: String
   ): Endpoint[IO, Journey] =
     get(
-      "journey" :: param[String]("start") :: param[String]("end") :: header[
+      "journey" :: param[String]("start") :: param[String]("end") :: param[
         String
       ]("jwt")
     ) { (start: Postcode, end: Postcode, token: String) =>
@@ -53,9 +53,9 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
       jwtSecret: String,
       jwtAlgorithm: String
   )(implicit parallel: Parallel[IO]): Endpoint[IO, String] =
-    post("journey" :: jsonBody[InsertJourneyRequest] :: header[String]("jwt")) {
-      (insertJourneyRequest: InsertJourneyRequest, token: String) =>
-        Support.decodeJwtToken(token, jwtSecret, jwtAlgorithm) match {
+    post("journey" :: jsonBody[InsertJourneyRequest]) {
+      (insertJourneyRequest: InsertJourneyRequest) =>
+        Support.decodeJwtToken(insertJourneyRequest.token, jwtSecret, jwtAlgorithm) match {
           case Right(tokenResult) => {
             log.info("Validating new Journey")
             val validatedJourney = createJourneyFromInput(insertJourneyRequest)
