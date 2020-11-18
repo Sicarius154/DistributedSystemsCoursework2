@@ -26,8 +26,8 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 //TODO: Use prepared statements
 /**
- * Queries for the Journey table
- */
+  * Queries for the Journey table
+  */
 object PersistedJourneyCacheQueries {
   def getJourneyByIdQuery(id: String): Query0[JourneyDbResult] =
     sql"""SELECT "journeyid", "start", "end", "blob" FROM journeys.journey WHERE journeyid = $id"""
@@ -53,10 +53,10 @@ class PersistentJourneyCache(transactor: Transactor[IO]) extends JourneyCache {
   private val logger: Logger = LoggerFactory.getLogger("PersistentJourneyCache")
 
   /**
-   * Takes a database transaction result, validates the JSON blob and converts it to a Journey
-   * @param journeyResult
-   * @return
-   */
+    * Takes a database transaction result, validates the JSON blob and converts it to a Journey
+    * @param journeyResult
+    * @return
+    */
   private def resultToJourney(journeyResult: JourneyDbResult): Option[Journey] =
     for {
       blob <- decode[JourneyDbResultBlob](journeyResult.blob).toOption
@@ -80,7 +80,14 @@ class PersistentJourneyCache(transactor: Transactor[IO]) extends JourneyCache {
         .getJourneyByPostcodesQuery(start, end)
         .to[List]
         .transact(transactor)
-        .map(dbResult => resultToJourney(dbResult.head))
+        .map { dbResult =>
+          val headRes = dbResult.headOption
+          headRes match {
+            case Some(head) => resultToJourney(head)
+            case None       => None
+          }
+
+        }
     ) //TODO: Handle when no head
 
   override def getJourneyByJourneyID(
@@ -129,10 +136,10 @@ object PersistentJourneyCache {
       .map(transactor => new PersistentJourneyCache(transactor))
 
   /**
-   * Execution context for db operations. Size determined by typesafe config
-   * @param poolSize
-   * @return
-   */
+    * Execution context for db operations. Size determined by typesafe config
+    * @param poolSize
+    * @return
+    */
   private def databaseExecutionContext(
       poolSize: Int
   ): ExecutionContextExecutor =
@@ -141,12 +148,12 @@ object PersistentJourneyCache {
     )
 
   /**
-   * Acquire Hikari transactor for database transactions
-   * @param databaseConfig
-   * @param ec
-   * @param cs
-   * @return
-   */
+    * Acquire Hikari transactor for database transactions
+    * @param databaseConfig
+    * @param ec
+    * @param cs
+    * @return
+    */
 
   private def hikariTransactor(
       databaseConfig: DatabaseConfig

@@ -38,7 +38,7 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
             journey <- journeyCache.getJourneyByPostcodes(start, end).value
             res = journey match {
               case Some(journey) => Ok(journey)
-              case None          => NoContent
+              case None          => NotFound(new Exception("No journey for these postcodes"))
             }
           } yield res
         }
