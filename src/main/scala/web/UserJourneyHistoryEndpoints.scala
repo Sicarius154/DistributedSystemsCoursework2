@@ -28,18 +28,10 @@ class UserJourneyHistoryEndpoints(
       Support.decodeJwtToken(token, jwtSecret, jwtAlgorithm) match {
         case Right(tokenResult) =>
           userSearchHistoryToJourneys(getUserSearchHistory(tokenResult.id))
-            .map(history =>
-              Ok(history).withHeaders(
-                Map[String, String]("Access-Control-Allow-Origin" -> "*")
-              )
-            )
+              .map(history => Ok(history))
         case Left(err) => {
           log.error(s"Error decoding JWT token. Returning HTTP 406")
-          IO(
-            NotAcceptable(new Exception(err)).withHeaders(
-              Map[String, String]("Access-Control-Allow-Origin" -> "*")
-            )
-          )
+          IO(NotAcceptable(new Exception(err)))
         }
       }
     }
@@ -49,14 +41,9 @@ class UserJourneyHistoryEndpoints(
       userSearches: IO[List[JourneyID]]
   ): IO[UserHistory] =
     for {
-      userSearches <-
-        userSearches.map(_.map(journeyCache.getJourneyByJourneyID(_).value))
-      historyFromDatabase <-
-        userSearches.sequence //.sequence the results to execute
-      history =
-        historyFromDatabase
-          .filter(_.isDefined)
-          .map(_.get) //If an element is defined, then we can use .get
+      userSearches <- userSearches.map(_.map(journeyCache.getJourneyByJourneyID(_).value))
+      historyFromDatabase <- userSearches.sequence //.sequence the results to execute
+      history = historyFromDatabase.filter(_.isDefined).map(_.get) //If an element is defined, then we can use .get
     } yield UserHistory(history)
 
   private def getUserSearchHistory(

@@ -4,6 +4,7 @@ import domain.journeys
 import cats.Applicative.ops.toAllApplicativeOps
 import cats.Parallel
 import cats.effect.{ContextShift, Blocker, Resource, ExitCode, IO}
+import com.twitter.finagle.http.filter.Cors
 import com.twitter.finagle.{ListeningServer, Service, Http}
 import com.twitter.finagle.http.{Request, Response}
 import config.Config
@@ -11,8 +12,16 @@ import io.finch.{Bootstrap, Application, ToAsync}
 import org.slf4j.{LoggerFactory, Logger}
 import pureconfig.ConfigSource
 import com.twitter.util.Future
-import domain.journeys.{JourneyCache, HardcodedJourneyCache, PersistentJourneyCache}
-import domain.searches.{PersistentSearchRepository, HardcodedSearchRepository, SearchRepository}
+import domain.journeys.{
+  JourneyCache,
+  HardcodedJourneyCache,
+  PersistentJourneyCache
+}
+import domain.searches.{
+  SearchRepository,
+  PersistentSearchRepository,
+  HardcodedSearchRepository
+}
 import web.Endpoints
 import io.finch.circe._
 import io.circe.generic.auto._
@@ -32,8 +41,8 @@ class Application()(implicit
 
     val conf = loadConfig
 
-    PersistentJourneyCache(conf.databaseConfig).flatMap {
-      journeyCache =>
+    PersistentJourneyCache(conf.databaseConfig)
+      .flatMap { journeyCache =>
         PersistentSearchRepository(conf.databaseConfig).map {
           searchRepository =>
             val server =
@@ -50,7 +59,8 @@ class Application()(implicit
               )
             server.use(_ => IO.never).as(ExitCode.Success)
         }
-    }.value
+      }
+      .value
       .flatMap(serverRes =>
         (serverRes match {
           case Right(code) => code
@@ -58,8 +68,7 @@ class Application()(implicit
             logger.error(s"Exiting with error: $err")
             IO.pure(ExitCode.Error)
           }
-        })
-          .map(res => res)
+        }).map(res => res)
       )
   }
 
@@ -84,17 +93,18 @@ class Application()(implicit
       jwtSecret: String,
       jwtAlgorithm: String
   ): Service[Request, Response] =
-    Bootstrap
-      .serve[Application.Json](
-        Endpoints.all(
-          journeyCache,
-          searchRepository,
-          jwtSecret,
-          jwtAlgorithm
+    new Cors.HttpFilter(Cors.UnsafePermissivePolicy).andThen(
+      (Bootstrap
+        .serve[Application.Json](
+          Endpoints.all(
+            journeyCache,
+            searchRepository,
+            jwtSecret,
+            jwtAlgorithm
+          )
         )
-      )
-      .toService
-
+        .toService)
+    )
   private def loadConfig: Config =
     ConfigSource.default.loadOrThrow[Config]
 }
