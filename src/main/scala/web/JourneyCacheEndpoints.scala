@@ -33,7 +33,7 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
     ) { (start: Postcode, end: Postcode, token: String) =>
       log.info(s"GET Request received ")
       Support.decodeJwtToken(token, jwtSecret, jwtAlgorithm) match {
-        case Right(tokenResult) => {
+        case Right(_) => { //Discard tokenValue as _ as we don't need to use it
           for {
             journey <- journeyCache.getJourneyByPostcodes(start, end).value
             res = journey match {
@@ -86,7 +86,7 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
               userID,
               journey.journeyID
             )
-          ).parSequence
+          ).parSequence //.parSequence to flatmap IO's in parallel
         } yield Ok("OK!")
       }
       case None => {
@@ -115,7 +115,7 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
       .filter(input => input._1.isDefined)
       .map((input: (Option[NonEmptyList[Line]], Int)) =>
         Route(input._1.get, input._2)
-      ) //TODO: Clean this up to remove .get()
+      ) //TODO: Clean this up to remove .get
 
     val meanJourneyTime =
       routes.map(_.journeyTime).sum / routes.length

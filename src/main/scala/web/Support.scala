@@ -17,14 +17,15 @@ object Support {
       secret: String,
       algorithm: String
   ): Either[String, TokenResult] = {
+    //TODO: Look into using alternate algorithms
     val jwtAlgorithm = algorithm match {
       case "HS256" => JwtAlgorithm.HS256
-      case _ => JwtAlgorithm.HS256
+      case _ => JwtAlgorithm.HS256 //Default to HS256
     }
 
     JwtCirce
       .decodeJson(token, secret, Seq(jwtAlgorithm))
-      .toEither
+      .toEither //We want to remove the Try instance and use Either
       .map(_.as[TokenResult]) match {
       case Right(decodeRes) =>
         decodeRes.toOption match {

@@ -26,6 +26,9 @@ import org.slf4j.{LoggerFactory, Logger}
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 //TODO: Use prepared statements
+/**
+ *Queries for the search repository
+ */
 object PersistedSearchRepositoryQueries {
   def insertNewSearch(
       userID: UserID,
@@ -53,7 +56,7 @@ class PersistentSearchRepository(transactor: Transactor[IO])(implicit
     PersistedSearchRepositoryQueries
       .insertNewSearch(userID, journeyID)
       .transact(transactor)
-      .map(_ => ())
+      .map(_ => ()) //map to unit as we don't care about values
 }
 
 object PersistentSearchRepository {
@@ -69,6 +72,11 @@ object PersistentSearchRepository {
     hikariTransactor(databaseConfig)
       .map(transactor => new PersistentSearchRepository(transactor))
 
+  /**
+   * Execution context to push DB operations on to
+   * @param poolSize
+   * @return
+   */
   private def databaseExecutionContext(
       poolSize: Int
   ): ExecutionContextExecutor =
@@ -76,6 +84,13 @@ object PersistentSearchRepository {
       Executors.newFixedThreadPool(poolSize)
     )
 
+  /**
+   * Acquire a Hikari transactor for DB operations
+   * @param databaseConfig
+   * @param ec
+   * @param cs
+   * @return
+   */
   private def hikariTransactor(
       databaseConfig: DatabaseConfig
   )(implicit
@@ -92,6 +107,7 @@ object PersistentSearchRepository {
         hikariConfig.setPassword(databaseConfig.login.password)
         hikariConfig.setMaximumPoolSize(databaseConfig.connection.poolSize)
 
+        //Return the acquired transactor as a Right
         Right(
           HikariTransactor.apply[IO](
             new HikariDataSource(hikariConfig),

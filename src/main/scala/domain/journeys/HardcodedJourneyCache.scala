@@ -5,6 +5,10 @@ import cats.data.{EitherT, NonEmptyList, OptionT}
 import domain.{JourneyID, Postcode}
 import org.slf4j.{LoggerFactory, Logger}
 
+/**
+ * Hardcoded repository adhering to the relevant trait. Used for tests and in-memory datasets
+ * @param logger
+ */
 class HardcodedJourneyCache(implicit val logger: Logger) extends JourneyCache {
   override def getJourneyByPostcodes(
       start: Postcode,

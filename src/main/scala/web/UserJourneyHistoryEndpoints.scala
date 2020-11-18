@@ -41,11 +41,9 @@ class UserJourneyHistoryEndpoints(
       userSearches: IO[List[JourneyID]]
   ): IO[UserHistory] =
     for {
-      userSearches <- userSearches.map(
-        _.map(journeyCache.getJourneyByJourneyID(_).value)
-      )
-      historyFromDatabase <- userSearches.sequence
-      history = historyFromDatabase.filter(_.isDefined).map(_.get)
+      userSearches <- userSearches.map(_.map(journeyCache.getJourneyByJourneyID(_).value))
+      historyFromDatabase <- userSearches.sequence //.sequence the results to execute
+      history = historyFromDatabase.filter(_.isDefined).map(_.get) //If an element is defined, then we can use .get
     } yield UserHistory(history)
 
   private def getUserSearchHistory(

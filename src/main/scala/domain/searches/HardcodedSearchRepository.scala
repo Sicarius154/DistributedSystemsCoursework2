@@ -5,6 +5,10 @@ import cats.data.{EitherT, NonEmptyList, Nested}
 import domain.{JourneyID, UserID}
 import org.slf4j.{LoggerFactory, Logger}
 
+/**
+ * Hardcoded repository used for testing and in-memory datasets
+ * @param logger
+ */
 class HardcodedSearchRepository(implicit val logger: Logger)
     extends SearchRepository {
 

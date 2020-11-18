@@ -8,6 +8,7 @@ import io.finch.Endpoint
 import shapeless.{CNil, :+:}
 
 object Endpoints {
+  //Combine all endpoints
   def all(
       journeyCache: JourneyCache,
       searchRepository: SearchRepository,
