@@ -2,7 +2,9 @@ package web
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
+import cats.Parallel
 import cats.data.NonEmptyList
+import cats.effect.{IO, ContextShift}
 import com.twitter.finagle.http.Status
 import config.Config
 import domain.journeys.{Journey, Line, HardcodedJourneyCache, Route}
@@ -16,6 +18,7 @@ import io.circe.syntax._
 import domain.journeys._
 import domain.searches.HardcodedSearchRepository
 
+import scala.concurrent.ExecutionContext
 import scala.io.Source
 
 class UserJourneyHistoryEndpointsSpec
@@ -23,30 +26,33 @@ class UserJourneyHistoryEndpointsSpec
     with Matchers
     with Eventually
     with BeforeAndAfterAll {
+  private implicit val ec: ExecutionContext = ExecutionContext.global
+  private implicit val cs: ContextShift[IO] = IO.contextShift(ec)
+  private implicit val parallel: Parallel[IO] = IO.ioParallel
   "/history" should {
     "Return the correct user history" when {
       "a valid JWT token is supplied and the user ID is correct" in {
         TestSupport.withHardcodedJourneyCache() {
           cache: HardcodedJourneyCache =>
-            TestSupport.withHardcodedSearchRepository() { searchRepo: HardcodedSearchRepository =>
+            TestSupport.withHardcodedSearchRepository() {
+              searchRepo: HardcodedSearchRepository =>
+                val req = Input
+                  .get(UserJourneyHistoryEndpointsSpec.getHistoryEndpoint)
+                  .withHeaders(
+                    "jwt" -> UserJourneyHistoryEndpointsSpec.validJwtToken
+                  )
 
-              val req = Input
-                .get(UserJourneyHistoryEndpointsSpec.getHistoryEndpoint)
-                .withHeaders(
-                  "jwt" -> UserJourneyHistoryEndpointsSpec.validJwtToken
-                )
-
-              eventually {
-                new JourneyCacheEndpoints(cache, searchRepo)
-                  .getJourney(
-                    JourneyCacheEndpointsSpec.jwtSecret,
-                    JourneyCacheEndpointsSpec.jwtAlgorithm
-                  )(req)
-                  .awaitOutputUnsafe()
-                  .map(
-                    _.value
-                  ) mustEqual UserJourneyHistoryEndpointsSpec.validUserHistory //TODO: Maybe just use sameElementsAs
-              }
+                eventually {
+                  new JourneyCacheEndpoints(cache, searchRepo)
+                    .getJourney(
+                      JourneyCacheEndpointsSpec.jwtSecret,
+                      JourneyCacheEndpointsSpec.jwtAlgorithm
+                    )(parallel)(req)
+                    .awaitOutputUnsafe()
+                    .map(
+                      _.value
+                    ) mustEqual UserJourneyHistoryEndpointsSpec.validUserHistory //TODO: Maybe just use sameElementsAs
+                }
             }
         }
       }

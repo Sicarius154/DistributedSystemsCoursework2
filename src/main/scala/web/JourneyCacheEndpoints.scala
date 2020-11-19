@@ -19,13 +19,16 @@ import org.slf4j.{LoggerFactory, Logger}
 
 import scala.concurrent.ExecutionContext
 
-class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: SearchRepository) {
+class JourneyCacheEndpoints(
+    journeyCache: JourneyCache,
+    searchRepository: SearchRepository
+) {
   private val log: Logger = LoggerFactory.getLogger("JourneyEndpoints")
 
   def getJourney(
       jwtSecret: String,
       jwtAlgorithm: String
-  ): Endpoint[IO, Journey] =
+  )(implicit parallel: Parallel[IO]): Endpoint[IO, Journey] =
     get(
       "journey" :: param[String]("start") :: param[String]("end") :: param[
         String
@@ -33,12 +36,19 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
     ) { (start: Postcode, end: Postcode, token: String) =>
       log.info(s"GET Request received ")
       Support.decodeJwtToken(token, jwtSecret, jwtAlgorithm) match {
-        case Right(_) => { //Discard tokenValue as _ as we don't need to use it
+        case Right(tokenValue) => {
           for {
             journey <- journeyCache.getJourneyByPostcodes(start, end).value
             res = journey match {
-              case Some(journey) => Ok(journey)
-              case None          => NotFound(new Exception("No journey for these postcodes"))
+              case Some(journey) => {
+                searchRepository
+                  .addUserSearch(tokenValue.id, journey.journeyID)
+                  .unsafeRunSync()
+                
+                Ok(journey)
+              }
+              case None =>
+                NotFound(new Exception("No journey for these postcodes"))
             }
           } yield res
         }
@@ -55,10 +65,15 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
   )(implicit parallel: Parallel[IO]): Endpoint[IO, String] =
     post("journey" :: jsonBody[InsertJourneyRequest]) {
       (insertJourneyRequest: InsertJourneyRequest) =>
-        Support.decodeJwtToken(insertJourneyRequest.token, jwtSecret, jwtAlgorithm) match {
+        Support.decodeJwtToken(
+          insertJourneyRequest.token,
+          jwtSecret,
+          jwtAlgorithm
+        ) match {
           case Right(tokenResult) => {
             log.info("Validating new Journey")
             val validatedJourney = createJourneyFromInput(insertJourneyRequest)
+
             writeNewJourney(
               tokenResult.id,
               validatedJourney
@@ -106,7 +121,9 @@ class JourneyCacheEndpoints(journeyCache: JourneyCache, searchRepository: Search
     val lineNamesFiltered: List[(Option[NonEmptyList[Line]], Int)] =
       insertJourneyRequest.routes.map(route =>
         (
-          NonEmptyList.fromList(route.orderedLines.filterNot(_.name.equals(""))),
+          NonEmptyList.fromList(
+            route.orderedLines.filterNot(_.name.equals(""))
+          ),
           route.journeyTime
         )
       )

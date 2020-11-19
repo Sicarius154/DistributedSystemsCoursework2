@@ -49,7 +49,7 @@ class JourneyCacheEndpointsSpec
                     .getJourney(
                       JourneyCacheEndpointsSpec.jwtSecret,
                       JourneyCacheEndpointsSpec.jwtAlgorithm
-                    )(req)
+                    )(parallel)(req)
                     .awaitOutputUnsafe()
                     .map(_.status) mustBe Some(Status.Ok)
                 }
@@ -77,7 +77,7 @@ class JourneyCacheEndpointsSpec
                     .getJourney(
                       JourneyCacheEndpointsSpec.jwtSecret,
                       JourneyCacheEndpointsSpec.jwtAlgorithm
-                    )(req)
+                    )(parallel)(req)
                     .awaitOutputUnsafe()
                     .map(_.status) mustBe Some(Status.NotAcceptable)
                 }
@@ -105,7 +105,7 @@ class JourneyCacheEndpointsSpec
                     .getJourney(
                       JourneyCacheEndpointsSpec.jwtSecret,
                       JourneyCacheEndpointsSpec.jwtAlgorithm
-                    )(req)
+                    )(parallel)(req)
                     .awaitOutputUnsafe()
                     .map(
                       _.value
